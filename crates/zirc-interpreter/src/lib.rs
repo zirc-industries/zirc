@@ -4,10 +4,14 @@ use zirc_syntax::ast::*;
 use zirc_syntax::error::{error, Result};
 
 #[derive(Debug, Clone, PartialEq)]
+//! Zirc interpreter: evaluates AST nodes with a simple runtime.
+
+/// Runtime value.
 pub enum Value {
     Int(i64),
     Str(String),
     Bool(bool),
+    List(Vec<Value>),
     Unit,
 }
 
@@ -17,18 +21,25 @@ impl std::fmt::Display for Value {
             Value::Int(n) => write!(f, "{}", n),
             Value::Str(s) => write!(f, "{}", s),
             Value::Bool(b) => write!(f, "{}", if *b { "true" } else { "false" }),
+            Value::List(items) => {
+                write!(f, "[")?;
+                for (i, it) in items.iter().enumerate() { if i>0 { write!(f, ", ")?; } write!(f, "{}", it)?; }
+                write!(f, "]")
+            }
             Value::Unit => write!(f, "<unit>"),
         }
     }
 }
 
 #[derive(Clone)]
+/// A variable binding holding a value and optional static type.
 pub struct Binding {
     pub value: Value,
     pub ty: Option<Type>,
 }
 
 #[derive(Clone)]
+/// Lexically nested environment of variable bindings.
 pub struct Env<'a> {
     vars: HashMap<String, Binding>,
     parent: Option<&'a Env<'a>>,
@@ -61,11 +72,13 @@ impl<'a> Env<'a> {
 }
 
 #[derive(Default, Debug, Clone)]
+/// Simple memory statistics (currently strings only) for observability.
 pub struct MemoryStats {
     pub strings_allocated: usize,
     pub bytes_allocated: usize,
 }
 
+/// The interpreter state and function table.
 pub struct Interpreter {
     functions: HashMap<String, Function>,
     mem: MemoryStats,
@@ -210,6 +223,31 @@ impl Interpreter {
             Expr::Le(a, b) => match (self.eval_expr(env, a)?, self.eval_expr(env, b)?) { (Value::Int(x), Value::Int(y)) => Ok(Value::Bool(x <= y)), _ => error("<= expects ints") },
             Expr::Gt(a, b) => match (self.eval_expr(env, a)?, self.eval_expr(env, b)?) { (Value::Int(x), Value::Int(y)) => Ok(Value::Bool(x > y)), _ => error("> expects ints") },
             Expr::Ge(a, b) => match (self.eval_expr(env, a)?, self.eval_expr(env, b)?) { (Value::Int(x), Value::Int(y)) => Ok(Value::Bool(x >= y)), _ => error(">= expects ints") },
+            Expr::List(elems) => {
+                let mut v = Vec::with_capacity(elems.len());
+                for e in elems { v.push(self.eval_expr(env, e)?); }
+                Ok(Value::List(v))
+            }
+            Expr::Index(base, idx) => {
+                let b = self.eval_expr(env, base)?;
+                let i = self.eval_expr(env, idx)?;
+                let ix = match i { Value::Int(n) => n, other => return error(format!("index expects int, got {:?}", other)) };
+                match b {
+                    Value::List(items) => {
+                        if ix < 0 || (ix as usize) >= items.len() { return error("index out of bounds"); }
+                        Ok(items[ix as usize].clone())
+                    }
+                    Value::Str(s) => {
+                        let chars: Vec<char> = s.chars().collect();
+                        if ix < 0 || (ix as usize) >= chars.len() { return error("index out of bounds"); }
+                        let ch = chars[ix as usize];
+                        let ss = ch.to_string();
+                        self.mem.strings_allocated += 1; self.mem.bytes_allocated += ss.len();
+                        Ok(Value::Str(ss))
+                    }
+                    other => error(format!("indexing not supported for {:?}", other))
+                }
+            }
             Expr::Call { name, args } => {
                 if name == "showf" {
                     return self.call_showf(env, args);
@@ -276,7 +314,8 @@ impl Interpreter {
                         match self.eval_expr(env, &args[arg_i])? {
                             Value::Str(s) => out.push_str(&s),
                             Value::Bool(b) => out.push_str(if b { "true" } else { "false" }),
-                            other => return error(format!("%s expects string/bool, got {:?}", other))
+                            Value::List(items) => out.push_str(&format!("{}", Value::List(items))),
+                            other => return error(format!("%s expects string/bool/list, got {:?}", other))
                         }
                         arg_i += 1;
                     }

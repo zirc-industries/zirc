@@ -10,7 +10,7 @@ Functions
 - function := "fun" ident "(" param_list? ")" return_type? ":" block "end"
 - param_list := ident ("," ident)*
 - return_type := "(" type_name ")"
-- type_name := "int" | "string" | "bool" | "unit"
+- type_name := "int" | "string" | "bool" | "list" | "unit"
 
 Blocks and statements
 - block := stmt*
@@ -33,7 +33,9 @@ Expressions (precedence)
 - term := factor (("+" | "-") factor)*
 - factor := unary (("*" | "/") unary)*
 - unary := "!" unary | primary
-- primary := number | string | "true" | "false" | ident | call | "(" expr ")"
+- primary := number | string | "true" | "false" | list | ident | call | "(" expr ")"
+- list := "[" (expr ("," expr)*)? "]"
+- postfix indexing: primary ("[" expr "]")*
 - call := ident "(" arg_list? ")"
 - arg_list := expr ("," expr)*
 

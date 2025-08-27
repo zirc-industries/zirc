@@ -2,12 +2,16 @@ use zirc_syntax::ast::*;
 use zirc_syntax::error::Result;
 use zirc_syntax::token::{Token, TokenKind};
 
+//! Zirc parser: builds an AST from a token stream.
+
+/// Handwritten recursive-descent parser with precedence climbing.
 pub struct Parser {
     tokens: Vec<Token>,
     pos: usize,
 }
 
 impl Parser {
+    /// Create a new parser from a vector of tokens.
     pub fn new(tokens: Vec<Token>) -> Self { Self { tokens, pos: 0 } }
 
     fn peek(&self) -> &Token { self.tokens.get(self.pos).unwrap() }
@@ -23,6 +27,7 @@ impl Parser {
         }
     }
 
+    /// Parse a full program (sequence of items until Eof).
     pub fn parse_program(&mut self) -> Result<Program> {
         let mut items = Vec::new();
         while !self.is_eof() {
@@ -42,6 +47,7 @@ impl Parser {
             "string" => Type::String,
             "bool" => Type::Bool,
             "unit" => Type::Unit,
+            "list" => Type::List,
             _ => return zirc_syntax::error::error_at(self.peek().line, self.peek().col, format!("Unknown type '{}'", name)),
         };
         Ok(ty)
@@ -243,7 +249,7 @@ impl Parser {
 
     fn parse_primary(&mut self) -> Result<Expr> {
         let tk = self.peek().clone();
-        match tk.kind {
+        let mut node = match tk.kind {
             TokenKind::Number(n) => { self.advance(); Ok(Expr::LiteralInt(n)) }
             TokenKind::String(s) => { self.advance(); Ok(Expr::LiteralString(s)) }
             TokenKind::True => { self.advance(); Ok(Expr::LiteralBool(true)) }
@@ -270,8 +276,29 @@ impl Parser {
                 self.expect(TokenKind::RParen)?;
                 Ok(e)
             }
+            TokenKind::LBracket => {
+                // list literal
+                self.advance();
+                let mut elems = Vec::new();
+                if !matches!(self.peek().kind, TokenKind::RBracket) {
+                    elems.push(self.parse_expr()?);
+                    while matches!(self.peek().kind, TokenKind::Comma) { self.advance(); elems.push(self.parse_expr()?); }
+                }
+                self.expect(TokenKind::RBracket)?;
+                Ok(Expr::List(elems))
+            }
             _ => zirc_syntax::error::error_at(tk.line, tk.col, format!("Unexpected token {:?}", tk.kind)),
+        }?;
+        // Postfix indexing
+        loop {
+            if matches!(self.peek().kind, TokenKind::LBracket) {
+                self.advance();
+                let idx = self.parse_expr()?;
+                self.expect(TokenKind::RBracket)?;
+                node = Expr::Index(Box::new(node), Box::new(idx));
+            } else { break; }
         }
+        Ok(node)
     }
 
     fn expect(&mut self, kind: TokenKind) -> Result<()> {

@@ -6,8 +6,8 @@ Comments
 - Start-of-line comments use `~`. Everything after `~` on a line is ignored.
 
 Values and types
-- int, string, bool, unit (special value returned when no value is produced)
-- Literals: `123`, `"hello"`, `true`, `false`
+- int, string, bool, list, unit (special value returned when no value is produced)
+- Literals: `123`, `"hello"`, `true`, `false`, `[1, 2, 3]`
 
 Variables
 - Declare with `let` in the current scope: `let x = 1`
@@ -58,6 +58,10 @@ while i < 5:
   showf("%d", i)
 end
 ```
+
+Lists
+- Literals with square brackets: `[a, b, c]`
+- Indexing with `list[index]` (0-based). Indexing strings returns a 1-character string.
 
 Builtin functions
 - `showf(fmt, ...)` prints a formatted string to stdout, supporting:

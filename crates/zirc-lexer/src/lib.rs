@@ -1,6 +1,9 @@
 use zirc_syntax::error::Result;
 use zirc_syntax::token::{Token, TokenKind};
 
+//! Zirc lexer: converts source text into tokens.
+
+/// Streaming character scanner that produces tokens with positions.
 pub struct Lexer {
     src: Vec<char>,
     pos: usize,
@@ -9,6 +12,7 @@ pub struct Lexer {
 }
 
 impl Lexer {
+    /// Create a new lexer over the given source string.
     pub fn new(input: &str) -> Self {
         Self { src: input.chars().collect(), pos: 0, line: 1, col: 1 }
     }
@@ -105,6 +109,7 @@ impl Lexer {
         zirc_syntax::error::error_at(start_line, start_col, "Unterminated string")
     }
 
+    /// Tokenize the entire input into a vector of tokens ending with Eof.
     pub fn tokenize(&mut self) -> Result<Vec<Token>> {
         let mut tokens = Vec::new();
         loop {
@@ -116,6 +121,8 @@ impl Lexer {
                 Some(')') => { self.advance(); self.make_token(TokenKind::RParen) }
                 Some(',') => { self.advance(); self.make_token(TokenKind::Comma) }
                 Some(':') => { self.advance(); self.make_token(TokenKind::Colon) }
+                Some('[') => { self.advance(); self.make_token(TokenKind::LBracket) }
+                Some(']') => { self.advance(); self.make_token(TokenKind::RBracket) }
                 Some('=') => {
                     if self.peek_next() == Some('=') { self.advance(); self.advance(); Token { kind: TokenKind::EqEq, line, col } }
                     else { self.advance(); self.make_token(TokenKind::Equal) }
