@@ -4,6 +4,7 @@ members = [
     "crates/zirc-lexer",
     "crates/zirc-parser",
     "crates/zirc-interpreter",
-    "crates/zirc-cli", "crates/zirc-fmt",
+    "crates/zirc-cli", 
+    "crates/zirc-fmt",
 ]
 resolver = "2"
