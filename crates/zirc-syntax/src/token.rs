@@ -26,20 +26,20 @@ pub enum TokenKind {
     LBracket,
     RBracket,
     // operators
-    Equal,      // =
-    Plus,       // +
-    Minus,      // -
-    Star,       // *
-    Slash,      // /
-    EqEq,       // ==
-    NotEq,      // !=
-    Less,       // <
-    LessEq,     // <=
-    Greater,    // >
-    GreaterEq,  // >=
-    AndAnd,     // &&
-    OrOr,       // ||
-    Bang,       // !
+    Equal,     // =
+    Plus,      // +
+    Minus,     // -
+    Star,      // *
+    Slash,     // /
+    EqEq,      // ==
+    NotEq,     // !=
+    Less,      // <
+    LessEq,    // <=
+    Greater,   // >
+    GreaterEq, // >=
+    AndAnd,    // &&
+    OrOr,      // ||
+    Bang,      // !
     Eof,
 }
 
@@ -50,4 +50,3 @@ pub struct Token {
     pub line: usize,
     pub col: usize,
 }
-

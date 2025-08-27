@@ -41,11 +41,25 @@ pub enum Expr {
 /// Statements (variable bindings, control flow, etc.).
 #[derive(Debug, Clone)]
 pub enum Stmt {
-    Let { name: String, ty: Option<Type>, expr: Expr },
-    Assign { name: String, expr: Expr },
+    Let {
+        name: String,
+        ty: Option<Type>,
+        expr: Expr,
+    },
+    Assign {
+        name: String,
+        expr: Expr,
+    },
     Return(Option<Expr>),
-    If { cond: Expr, then_body: Vec<Stmt>, else_body: Vec<Stmt> },
-    While { cond: Expr, body: Vec<Stmt> },
+    If {
+        cond: Expr,
+        then_body: Vec<Stmt>,
+        else_body: Vec<Stmt>,
+    },
+    While {
+        cond: Expr,
+        body: Vec<Stmt>,
+    },
     Break,
     Continue,
     ExprStmt(Expr),
@@ -79,4 +93,3 @@ pub enum Item {
 pub struct Program {
     pub items: Vec<Item>,
 }
-

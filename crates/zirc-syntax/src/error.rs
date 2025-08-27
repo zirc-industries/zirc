@@ -9,10 +9,18 @@ pub struct Error {
 
 impl Error {
     pub fn new(msg: impl Into<String>) -> Self {
-        Self { msg: msg.into(), line: None, col: None }
+        Self {
+            msg: msg.into(),
+            line: None,
+            col: None,
+        }
     }
     pub fn with_span(msg: impl Into<String>, line: usize, col: usize) -> Self {
-        Self { msg: msg.into(), line: Some(line), col: Some(col) }
+        Self {
+            msg: msg.into(),
+            line: Some(line),
+            col: Some(col),
+        }
     }
 }
 
@@ -27,10 +35,14 @@ impl fmt::Display for Error {
 }
 
 impl From<String> for Error {
-    fn from(s: String) -> Self { Error::new(s) }
+    fn from(s: String) -> Self {
+        Error::new(s)
+    }
 }
 impl From<&str> for Error {
-    fn from(s: &str) -> Self { Error::new(s) }
+    fn from(s: &str) -> Self {
+        Error::new(s)
+    }
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -42,4 +54,3 @@ pub fn error<T>(msg: impl Into<String>) -> Result<T> {
 pub fn error_at<T>(line: usize, col: usize, msg: impl Into<String>) -> Result<T> {
     Err(Error::with_span(msg, line, col))
 }
-

@@ -5,7 +5,12 @@ use std::process::Command;
 
 fn workspace_root() -> PathBuf {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    manifest_dir.parent().unwrap().parent().unwrap().to_path_buf()
+    manifest_dir
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .to_path_buf()
 }
 
 #[test]
@@ -41,4 +46,3 @@ fn parse_error_is_nonzero() {
         .failure()
         .stderr(predicate::str::contains("Parse error"));
 }
-
