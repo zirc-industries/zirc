@@ -58,7 +58,7 @@ fn format_program(p: &Program) -> String {
 }
 
 fn format_type(t: &Type) -> &'static str {
-    match t { Type::Int => "int", Type::String => "string", Type::Bool => "bool", Type::Unit => "unit" }
+    match t { Type::Int => "int", Type::String => "string", Type::Bool => "bool", Type::List => "list", Type::Unit => "unit" }
 }
 
 fn format_function(f: &Function) -> String {
@@ -138,6 +138,14 @@ fn format_expr(e: &Expr) -> String {
         Expr::LogicalAnd(a,b) => bin("&&", a, b),
         Expr::LogicalOr(a,b) => bin("||", a, b),
         Expr::LogicalNot(x) => format!("!{}", wrap(x)),
+        Expr::List(items) => {
+            let mut s = String::new();
+            s.push('[');
+            for (i, it) in items.iter().enumerate() { if i>0 { s.push_str(", "); } s.push_str(&format_expr(it)); }
+            s.push(']');
+            s
+        }
+        Expr::Index(base, idx) => format!("{}[{}]", wrap(base), format_expr(idx)),
         Expr::Call { name, args } => {
             let mut s = String::new();
             s.push_str(name);
