@@ -22,6 +22,7 @@ Expressions
 
 Functions
 - Define with `fun name(params) (ret_type): ... end`
+- Parameter annotations: `fun sum(a: int, b: int) (int): ... end`
 - Return with `return expr` or use the last expression value (implicit) if you prefer
 - Parameters currently untyped; return type supports: `(int)`, `(string)`, `(bool)`, `(unit)`
 
@@ -36,10 +37,12 @@ showf("x == 5? %s", x == 5)
 ```
 
 Control flow
-- If/else:
+- If/else/else-if:
 ```text
 if cond:
   ~ then block
+else if other_cond:
+  ~ else-if block
 else:
   ~ else block
 end
