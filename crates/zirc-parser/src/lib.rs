@@ -2,9 +2,7 @@ use zirc_syntax::ast::*;
 use zirc_syntax::error::Result;
 use zirc_syntax::token::{Token, TokenKind};
 
-//! Zirc parser: builds an AST from a token stream.
-
-/// Handwritten recursive-descent parser with precedence climbing.
+/// Builds an AST from a token stream handwritten recursive-descent parser with precedence climbing.
 pub struct Parser {
     tokens: Vec<Token>,
     pos: usize,

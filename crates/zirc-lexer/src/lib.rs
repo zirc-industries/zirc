@@ -1,7 +1,7 @@
 use zirc_syntax::error::Result;
 use zirc_syntax::token::{Token, TokenKind};
 
-//! Zirc lexer: converts source text into tokens.
+/// Zirc lexer: converts source text into tokens.
 
 /// Streaming character scanner that produces tokens with positions.
 pub struct Lexer {

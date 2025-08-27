@@ -4,7 +4,7 @@ use zirc_syntax::ast::*;
 use zirc_syntax::error::{error, Result};
 
 #[derive(Debug, Clone, PartialEq)]
-//! Zirc interpreter: evaluates AST nodes with a simple runtime.
+/// Zirc interpreter: evaluates AST nodes with a simple runtime.
 
 /// Runtime value.
 pub enum Value {
