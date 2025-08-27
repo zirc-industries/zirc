@@ -1,0 +1,13 @@
+~ Recursive factorial using if/else and return
+fun fact(n) (int):
+  if n == 0:
+    return 1
+  else:
+    return n * fact(n - 1)
+  end
+end
+
+let n = 5
+let f = fact(n)
+showf("fact(%d) = %d", n, f)
+

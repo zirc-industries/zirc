@@ -1,0 +1,10 @@
+~ Conditionals and comparisons
+let a = 3
+let b = 5
+if a < b:
+  showf("%d is less than %d", a, b)
+else:
+  showf("%d is not less than %d", a, b)
+end
+showf("a == b? %s", a == b)
+

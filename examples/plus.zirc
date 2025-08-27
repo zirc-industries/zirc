@@ -1,0 +1,9 @@
+~ Function with let and return
+fun plus(a, b) (int):
+  let result = a + b
+  return result
+end
+
+let x = plus(4, 6)
+showf("x == 10? %s", x == 10)
+

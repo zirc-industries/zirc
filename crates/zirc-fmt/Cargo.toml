@@ -1,0 +1,9 @@
+[package]
+name = "zirc-fmt"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+zirc-lexer = { path = "../zirc-lexer" }
+zirc-parser = { path = "../zirc-parser" }
+zirc-syntax = { path = "../zirc-syntax" }

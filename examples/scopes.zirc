@@ -1,0 +1,11 @@
+~ Shows local mutation in a function scope vs top-level let
+fun bump() (int):
+  let y = 10
+  y = y + 1
+  return y
+end
+
+let y = 1
+let z = bump()
+showf("top y = %d, bump() -> %d", y, z)
+

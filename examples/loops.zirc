@@ -1,0 +1,13 @@
+~ While loop with break and continue
+let i = 0
+while i < 6:
+  i = i + 1
+  if i == 3:
+    continue
+  end
+  if i == 5:
+    break
+  end
+  showf("%d", i)
+end
+
