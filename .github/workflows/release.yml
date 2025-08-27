@@ -1,0 +1,45 @@
+name: Release (Windows)
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Build release binaries
+        run: |
+          cargo build -p zirc-cli --release
+          cargo build -p zirc-cli --release --bin zirc-repl
+          cargo build -p zirc-fmt --release
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zirc-windows-binaries
+          path: |
+            target/release/zirc-cli.exe
+            target/release/zirc-repl.exe
+            target/release/zirc-fmt.exe
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/release/zirc-cli.exe
+            target/release/zirc-repl.exe
+            target/release/zirc-fmt.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
