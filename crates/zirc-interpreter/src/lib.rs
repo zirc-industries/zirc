@@ -1,16 +1,77 @@
-//! Zirc interpreter: evaluates AST nodes with a simple runtime.
+//! Zirc interpreter: evaluates AST nodes with a simple tree-walking interpreter.
+//!
+//! This module provides the runtime evaluation system for the Zirc programming language.
+//! It implements a tree-walking interpreter that directly executes Abstract Syntax Tree (AST) nodes
+//! produced by the parser.
+//!
+//! # Architecture
+//!
+//! The interpreter consists of several key components:
+//! - [`Value`]: Runtime representation of data values
+//! - [`Env`]: Lexically scoped environment for variable bindings  
+//! - [`Interpreter`]: Main interpreter state and execution engine
+//! - [`MemoryStats`]: Memory usage tracking for observability
+//!
+//! # Features
+//!
+//! - Dynamic typing with runtime type checking
+//! - Lexical scoping with nested environments
+//! - Built-in I/O functions (show, prompt, rf, wf)
+//! - Memory usage tracking
+//! - Support for integers, strings, booleans, lists, and unit values
+//!
+//! # Example
+//!
+//! ```rust
+//! use zirc_interpreter::{Interpreter, Value};
+//! use zirc_syntax::ast::*;
+//! 
+//! let mut interpreter = Interpreter::new();
+//! // Execute a program...
+//! ```
+
 use std::collections::HashMap;
+use std::fs;
+use std::io::{self, Write};
 
 use zirc_syntax::ast::*;
 use zirc_syntax::error::{Result, error};
 
+/// Runtime value representation in the Zirc interpreter.
+///
+/// This enum represents all possible values that can exist at runtime in Zirc programs.
+/// Values are dynamically typed and can be of any of these variants.
+///
+/// # Variants
+///
+/// * `Int(i64)` - 64-bit signed integer values
+/// * `Str(String)` - UTF-8 encoded string values  
+/// * `Bool(bool)` - Boolean true/false values
+/// * `List(Vec<Value>)` - Dynamic arrays containing any mix of values
+/// * `Unit` - Represents "no value" (similar to void or null in other languages)
+///
+/// # Examples
+///
+/// ```rust
+/// use zirc_interpreter::Value;
+///
+/// let num = Value::Int(42);
+/// let text = Value::Str("hello".to_string());
+/// let flag = Value::Bool(true);
+/// let items = Value::List(vec![num, text, flag]);
+/// let nothing = Value::Unit;
+/// ```
 #[derive(Debug, Clone, PartialEq)]
-/// Runtime value.
 pub enum Value {
+    /// A 64-bit signed integer value
     Int(i64),
+    /// A UTF-8 encoded string value
     Str(String),
+    /// A boolean value (true or false)
     Bool(bool),
+    /// A dynamic list containing other values
     List(Vec<Value>),
+    /// The unit value representing "no value"
     Unit,
 }
 
@@ -35,17 +96,51 @@ impl std::fmt::Display for Value {
     }
 }
 
+/// A variable binding that holds a runtime value with optional type information.
+///
+/// Each variable binding in the interpreter consists of:
+/// - The actual runtime value
+/// - Optional type annotation for runtime type checking
+///
+/// This allows the interpreter to perform dynamic type checking when variables
+/// have explicit type annotations while still supporting dynamically typed variables.
 #[derive(Clone)]
-/// A variable binding holding a value and optional static type.
 pub struct Binding {
+    /// The runtime value of this binding
     pub value: Value,
+    /// Optional type annotation for runtime type checking
     pub ty: Option<Type>,
 }
 
+/// Lexically scoped environment for variable bindings.
+///
+/// The environment implements lexical scoping through a chain of parent environments.
+/// When a variable is looked up, it first checks the current scope, then walks up
+/// the parent chain until the variable is found or the root is reached.
+///
+/// # Lifetime
+///
+/// The lifetime parameter `'a` represents the lifetime of parent environments in the scope chain.
+/// This ensures that child environments cannot outlive their parents.
+///
+/// # Examples
+///
+/// ```rust
+/// use zirc_interpreter::{Env, Value};
+///
+/// let mut root = Env::new_root();
+/// root.define("x".to_string(), Value::Int(42), None);
+///
+/// let mut child = root.child();
+/// child.define("y".to_string(), Value::Str("hello".to_string()), None);
+/// // child can access both x and y
+/// // root can only access x
+/// ```
 #[derive(Clone)]
-/// Lexically nested environment of variable bindings.
 pub struct Env<'a> {
+    /// Variables defined in this scope
     vars: HashMap<String, Binding>,
+    /// Reference to parent environment (None for root scope)
     parent: Option<&'a Env<'a>>,
 }
 
@@ -95,16 +190,63 @@ impl<'a> Env<'a> {
     }
 }
 
+/// Memory usage statistics for the interpreter.
+///
+/// This struct tracks memory allocation patterns to provide observability
+/// into the interpreter's resource usage. Currently focused on string allocations
+/// since they represent the most significant memory usage in typical programs.
+///
+/// # Usage
+///
+/// The interpreter automatically tracks memory statistics during execution.
+/// You can retrieve current stats using [`Interpreter::memory_stats`].
+///
+/// # Examples
+///
+/// ```rust
+/// use zirc_interpreter::Interpreter;
+///
+/// let mut interpreter = Interpreter::new();
+/// // ... run some code ...
+/// let stats = interpreter.memory_stats();
+/// println!("Allocated {} strings, {} bytes", stats.strings_allocated, stats.bytes_allocated);
+/// ```
 #[derive(Default, Debug, Clone)]
-/// Simple memory statistics (currently strings only) for observability.
 pub struct MemoryStats {
+    /// Number of string values allocated during execution
     pub strings_allocated: usize,
+    /// Total bytes allocated for string storage
     pub bytes_allocated: usize,
 }
 
-/// The interpreter state and function table.
+/// Main interpreter engine for Zirc programs.
+///
+/// The interpreter maintains global state including function definitions and memory statistics.
+/// It implements a tree-walking interpreter that directly executes AST nodes without
+/// compiling to intermediate representation.
+///
+/// # Architecture
+///
+/// The interpreter uses several key design patterns:
+/// - **Tree-walking**: Direct evaluation of AST nodes
+/// - **Dynamic typing**: Runtime type checking and coercion
+/// - **Lexical scoping**: Nested environments for variable resolution
+/// - **Built-in functions**: Hardcoded functions for I/O and utilities
+///
+/// # Examples
+///
+/// ```rust
+/// use zirc_interpreter::Interpreter;
+/// use zirc_syntax::ast::Program;
+///
+/// let mut interpreter = Interpreter::new();
+/// // let program = parse_program("let x = 42");
+/// // interpreter.run(program)?;
+/// ```
 pub struct Interpreter {
+    /// Global function definitions available to all scopes
     functions: HashMap<String, Function>,
+    /// Memory usage tracking for observability
     mem: MemoryStats,
 }
 
@@ -391,8 +533,14 @@ impl Interpreter {
                 }
             }
             Expr::Call { name, args } => {
-                if name == "showf" {
-                    return self.call_showf(env, args);
+                // Handle builtin functions
+                match name.as_str() {
+                    "showf" => return self.call_showf(env, args),
+                    "show" => return self.call_show(env, args),
+                    "prompt" => return self.call_prompt(env, args),
+                    "rf" => return self.call_rf(env, args),
+                    "wf" => return self.call_wf(env, args),
+                    _ => {}
                 }
                 let func = self
                     .functions
@@ -506,12 +654,119 @@ impl Interpreter {
         println!("{}", out);
         Ok(Value::Unit)
     }
+
+    /// Simple show function - prints a single value
+    fn call_show(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 1 {
+            return error("show() expects exactly 1 argument");
+        }
+        let val = self.eval_expr(env, &args[0])?;
+        println!("{}", val);
+        Ok(Value::Unit)
+    }
+
+    /// Prompt function - reads a line from stdin and returns as string
+    fn call_prompt(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() > 1 {
+            return error("prompt() expects 0 or 1 arguments");
+        }
+        
+        // Optional prompt string
+        if args.len() == 1 {
+            let prompt = self.eval_expr(env, &args[0])?;
+            match prompt {
+                Value::Str(s) => {
+                    print!("{}", s);
+                    io::stdout().flush().map_err(|e| format!("IO error: {}", e))?;
+                }
+                other => return error(format!("prompt() prompt must be string, got {:?}", other)),
+            }
+        }
+        
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).map_err(|e| format!("IO error: {}", e))?;
+        
+        // Remove trailing newline
+        if input.ends_with('\n') {
+            input.pop();
+            if input.ends_with('\r') {
+                input.pop();
+            }
+        }
+        
+        self.mem.strings_allocated += 1;
+        self.mem.bytes_allocated += input.len();
+        Ok(Value::Str(input))
+    }
+
+    /// Read file function - reads entire file content as string
+    fn call_rf(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 1 {
+            return error("rf() expects exactly 1 argument");
+        }
+        
+        let path = match self.eval_expr(env, &args[0])? {
+            Value::Str(s) => s,
+            other => return error(format!("rf() path must be string, got {:?}", other)),
+        };
+        
+        let content = fs::read_to_string(&path)
+            .map_err(|e| format!("Failed to read file '{}': {}", path, e))?;
+        
+        self.mem.strings_allocated += 1;
+        self.mem.bytes_allocated += content.len();
+        Ok(Value::Str(content))
+    }
+
+    /// Write file function - writes string content to file
+    fn call_wf(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 2 {
+            return error("wf() expects exactly 2 arguments: path and content");
+        }
+        
+        let path = match self.eval_expr(env, &args[0])? {
+            Value::Str(s) => s,
+            other => return error(format!("wf() path must be string, got {:?}", other)),
+        };
+        
+        let content = match self.eval_expr(env, &args[1])? {
+            Value::Str(s) => s,
+            other => return error(format!("wf() content must be string, got {:?}", other)),
+        };
+        
+        fs::write(&path, &content)
+            .map_err(|e| format!("Failed to write file '{}': {}", path, e))?;
+        
+        Ok(Value::Unit)
+    }
 }
 
+/// Control flow state during statement execution.
+///
+/// This enum represents the different ways that statement execution can terminate,
+/// allowing proper handling of control flow constructs like return, break, and continue.
+/// 
+/// # Variants
+///
+/// * `Continue(Value)` - Normal execution continues with the given value
+/// * `Return(Value)` - Function should return with the given value
+/// * `Break` - Break out of the current loop
+/// * `ContinueLoop` - Continue to the next iteration of the current loop
+///
+/// # Usage
+///
+/// This enum is used internally by the interpreter to propagate control flow changes
+/// up the call stack. For example, when a `return` statement is encountered inside
+/// a nested block, the `Return` variant allows the interpreter to unwind the stack
+/// and return from the function immediately.
 #[derive(Debug)]
 enum Flow {
+    /// Continue normal execution with the given value
     Continue(Value),
+    /// Return from function with the given value
     Return(Value),
+    /// Break out of current loop
     Break,
+    /// Continue to next loop iteration
     ContinueLoop,
 }
