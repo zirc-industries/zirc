@@ -18,6 +18,8 @@ pub enum TokenKind {
     Let,
     True,
     False,
+    For,
+    In,
     // punctuation
     Comma,
     Colon,
@@ -40,6 +42,7 @@ pub enum TokenKind {
     AndAnd,    // &&
     OrOr,      // ||
     Bang,      // !
+    DotDot,    // ..
     Eof,
 }
 
