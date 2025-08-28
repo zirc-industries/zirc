@@ -112,6 +112,8 @@ impl Lexer {
             "continue" => TokenKind::Continue,
             "true" => TokenKind::True,
             "false" => TokenKind::False,
+            "for" => TokenKind::For,
+            "in" => TokenKind::In,
             _ => TokenKind::Ident(s),
         };
         Token {
@@ -312,6 +314,23 @@ impl Lexer {
                             line,
                             col,
                             "Unexpected '|' (did you mean '||'?)",
+                        );
+                    }
+                }
+                Some('.') => {
+                    if self.peek_next() == Some('.') {
+                        self.advance();
+                        self.advance();
+                        Token {
+                            kind: TokenKind::DotDot,
+                            line,
+                            col,
+                        }
+                    } else {
+                        return zirc_syntax::error::error_at(
+                            line,
+                            col,
+                            "Unexpected '.' (did you mean '..'?)",
                         );
                     }
                 }
