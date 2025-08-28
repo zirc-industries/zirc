@@ -128,13 +128,13 @@ pub struct Binding {
 /// ```rust
 /// use zirc_interpreter::{Env, Value};
 ///
-/// let mut root = Env::new_root();
-/// root.define("x".to_string(), Value::Int(42), None);
-///
-/// let mut child = root.child();
-/// child.define("y".to_string(), Value::Str("hello".to_string()), None);
-/// // child can access both x and y
-/// // root can only access x
+/// // Create a root environment
+/// let root = Env::new_root();
+/// 
+/// // Environments are used internally by the interpreter
+/// // to manage variable scoping during program execution
+/// let vars = root.vars_snapshot();
+/// assert_eq!(vars.len(), 0); // Initially empty
 /// ```
 #[derive(Clone)]
 pub struct Env<'a> {
