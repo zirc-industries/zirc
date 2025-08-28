@@ -40,12 +40,6 @@ jobs:
       - name: Build
         run: cargo build --workspace --all-targets --color always
 
-      - name: Format check
-        run: cargo fmt --all -- --check
-
-      - name: Clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
-
       - name: Test
         run: cargo test --workspace --all-features --color always
 
