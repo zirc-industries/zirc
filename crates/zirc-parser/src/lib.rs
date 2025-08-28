@@ -179,6 +179,23 @@ impl Parser {
                 self.expect(TokenKind::End)?;
                 Ok(Stmt::While { cond, body })
             }
+            TokenKind::For => {
+                self.advance();
+                let var = self.consume_ident()?;
+                self.expect(TokenKind::In)?;
+                let start = self.parse_expr()?;
+                self.expect(TokenKind::DotDot)?;
+                let end = self.parse_expr()?;
+                self.expect(TokenKind::Colon)?;
+                let body = self.parse_block_until_end()?;
+                self.expect(TokenKind::End)?;
+                Ok(Stmt::For {
+                    var,
+                    start,
+                    end,
+                    body,
+                })
+            }
             TokenKind::Break => {
                 self.advance();
                 Ok(Stmt::Break)
