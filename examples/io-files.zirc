@@ -1,0 +1,23 @@
+~ File I/O example using rf() and wf()
+
+~ Create a test file
+let message = "Hello from Zirc programming language!"
+let filename = "test_output.txt"
+
+show("Writing to file: " + filename)
+wf(filename, message)
+show("File written successfully!")
+
+~ Read the file back
+show("Reading from file: " + filename)
+let content = rf(filename)
+show("File content: " + content)
+
+~ Append to file by reading, modifying, and writing back
+let additional = "\nThis line was added by the program."
+let updated_content = content + additional
+wf(filename, updated_content)
+
+show("Updated file content:")
+let final_content = rf(filename)
+show(final_content)

@@ -1,0 +1,13 @@
+~ Basic I/O example using show() and prompt()
+
+show("Hello! Let's test the I/O functions.")
+
+let name = prompt("What's your name? ")
+show("Nice to meet you, " + name + "!")
+
+let age_str = prompt("How old are you? ")
+show("You entered: " + age_str)
+
+~ Simple calculation
+let x = 5 + 3
+showf("5 + 3 = %d", x)

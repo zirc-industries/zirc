@@ -1,0 +1,9 @@
+~ Test show function
+show("Hello from show()!")
+show(42)
+show(true)
+show([1, 2, 3])
+
+~ Compare with showf
+showf("Hello from showf: %s", "world")
+show("Hello from show: " + "world")
