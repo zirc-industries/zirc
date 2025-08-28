@@ -180,6 +180,26 @@ fn format_stmt(s: &Stmt, indent: usize) -> String {
             out.push_str(&pad);
             out.push_str("end\n");
         }
+        Stmt::For {
+            var,
+            start,
+            end,
+            body,
+        } => {
+            out.push_str(&pad);
+            out.push_str("for ");
+            out.push_str(var);
+            out.push_str(" in ");
+            out.push_str(&format_expr(start));
+            out.push_str("..");
+            out.push_str(&format_expr(end));
+            out.push_str(":\n");
+            for st in body {
+                out.push_str(&format_stmt(st, indent + 2));
+            }
+            out.push_str(&pad);
+            out.push_str("end\n");
+        }
         Stmt::Break => {
             out.push_str(&pad);
             out.push_str("break\n");
