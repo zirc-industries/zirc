@@ -2,7 +2,7 @@
 use std::collections::HashMap;
 
 use zirc_syntax::ast::*;
-use zirc_syntax::error::{error, Result};
+use zirc_syntax::error::{Result, error};
 
 #[derive(Debug, Clone, PartialEq)]
 /// Runtime value.
@@ -142,11 +142,7 @@ impl Interpreter {
         Ok(())
     }
 
-    pub fn run_with_env(
-        &mut self,
-        program: Program,
-        env: &mut Env<'_>,
-    ) -> Result<Option<Value>> {
+    pub fn run_with_env(&mut self, program: Program, env: &mut Env<'_>) -> Result<Option<Value>> {
         for item in &program.items {
             if let Item::Function(f) = item {
                 self.functions.insert(f.name.clone(), f.clone());
@@ -235,6 +231,41 @@ impl Interpreter {
                         Flow::Break => break,
                         Flow::ContinueLoop => continue,
                     }
+                }
+                Ok(Flow::Continue(Value::Unit))
+            }
+            Stmt::For {
+                var,
+                start,
+                end,
+                body,
+            } => {
+                let s = self.eval_expr(env, start)?;
+                let e = self.eval_expr(env, end)?;
+                let (mut i, e) = match (s, e) {
+                    (Value::Int(a), Value::Int(b)) => (a, b),
+                    (a, b) => {
+                        return error(format!("for bounds must be ints, got {:?} and {:?}", a, b));
+                    }
+                };
+                while i < e {
+                    if env.get(var).is_some() {
+                        env.assign(var, Value::Int(i))?;
+                    } else {
+                        env.define(var.clone(), Value::Int(i), Some(Type::Int));
+                    }
+                    match self.exec_block(env, body)? {
+                        Flow::Continue(v) => {
+                            let _ = v;
+                        }
+                        Flow::Return(v) => return Ok(Flow::Return(v)),
+                        Flow::Break => break,
+                        Flow::ContinueLoop => {
+                            i += 1;
+                            continue;
+                        }
+                    }
+                    i += 1;
                 }
                 Ok(Flow::Continue(Value::Unit))
             }
