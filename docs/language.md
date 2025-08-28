@@ -61,6 +61,12 @@ while i < 5:
   showf("%d", i)
 end
 ```
+- For loop over integer ranges (start inclusive, end exclusive):
+```text
+for i in 0..5:
+  showf("%d", i)
+end
+```
 
 Lists
 - Literals with square brackets: `[a, b, c]`

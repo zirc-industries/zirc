@@ -14,11 +14,12 @@ Functions
 
 Blocks and statements
 - block := stmt*
-- stmt := let_stmt | assign_stmt | if_stmt | while_stmt | return_stmt | break_stmt | continue_stmt | expr_stmt
+- stmt := let_stmt | assign_stmt | if_stmt | while_stmt | for_stmt | return_stmt | break_stmt | continue_stmt | expr_stmt
 - let_stmt := "let" ident "=" expr
 - assign_stmt := ident "=" expr
 - if_stmt := "if" expr ":" block ("else" ":" block)? "end"
 - while_stmt := "while" expr ":" block "end"
+- for_stmt := "for" ident "in" expr ".." expr ":" block "end"
 - return_stmt := "return" expr?
 - break_stmt := "break"
 - continue_stmt := "continue"
