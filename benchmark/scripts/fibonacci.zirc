@@ -1,0 +1,13 @@
+~ Recursive Fibonacci with minimal I/O to avoid skewing timings
+fun fib(n) (int):
+  if n < 2:
+    return n
+  else:
+    return fib(n - 1) + fib(n - 2)
+  end
+end
+
+let n = 20
+let r = fib(n)
+showf("fib(%d) = %d", n, r)
+
