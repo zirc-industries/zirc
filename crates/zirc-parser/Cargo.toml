@@ -1,7 +1,15 @@
 [package]
 name = "zirc-parser"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+description = "Parser for the Zirc programming language"
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
-zirc-syntax = { path = "../zirc-syntax" }
+zirc-syntax.workspace = true

@@ -1,9 +1,17 @@
 [package]
 name = "zirc-fmt"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+description = "Code formatter for the Zirc programming language"
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
-zirc-lexer = { path = "../zirc-lexer" }
-zirc-parser = { path = "../zirc-parser" }
-zirc-syntax = { path = "../zirc-syntax" }
+zirc-lexer.workspace = true
+zirc-parser.workspace = true
+zirc-syntax.workspace = true

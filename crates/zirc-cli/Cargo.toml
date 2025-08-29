@@ -1,20 +1,28 @@
 [package]
 name = "zirc-cli"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+description = "Command-line interface and REPL for the Zirc programming language"
+keywords.workspace = true
+categories.workspace = true
 
 [[bin]]
 name = "zirc-repl"
 path = "src/repl_main.rs"
 
 [dependencies]
-zirc-lexer = { path = "../zirc-lexer" }
-zirc-parser = { path = "../zirc-parser" }
-zirc-interpreter = { path = "../zirc-interpreter" }
-zirc-syntax = { path = "../zirc-syntax" }
-owo-colors = "3"
+zirc-lexer.workspace = true
+zirc-parser.workspace = true
+zirc-interpreter.workspace = true
+zirc-syntax.workspace = true
+owo-colors.workspace = true
 
 [dev-dependencies]
-assert_cmd = "2"
-predicates = "3"
-tempfile = "3"
+assert_cmd.workspace = true
+predicates.workspace = true
+tempfile.workspace = true

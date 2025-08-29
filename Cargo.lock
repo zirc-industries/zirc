@@ -417,7 +417,7 @@ dependencies = [
 
 [[package]]
 name = "zirc-cli"
-version = "0.1.0"
+version = "0.0.1-dev"
 dependencies = [
  "assert_cmd",
  "owo-colors",
@@ -431,7 +431,7 @@ dependencies = [
 
 [[package]]
 name = "zirc-fmt"
-version = "0.1.0"
+version = "0.0.1-dev"
 dependencies = [
  "zirc-lexer",
  "zirc-parser",
@@ -440,25 +440,25 @@ dependencies = [
 
 [[package]]
 name = "zirc-interpreter"
-version = "0.1.0"
+version = "0.0.1-dev"
 dependencies = [
  "zirc-syntax",
 ]
 
 [[package]]
 name = "zirc-lexer"
-version = "0.1.0"
+version = "0.0.1-dev"
 dependencies = [
  "zirc-syntax",
 ]
 
 [[package]]
 name = "zirc-parser"
-version = "0.1.0"
+version = "0.0.1-dev"
 dependencies = [
  "zirc-syntax",
 ]
 
 [[package]]
 name = "zirc-syntax"
-version = "0.1.0"
+version = "0.0.1-dev"

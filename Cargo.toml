@@ -8,3 +8,28 @@ members = [
     "crates/zirc-fmt",
 ]
 resolver = "2"
+
+[workspace.package]
+version = "0.0.1-dev"
+edition = "2021"
+authors = ["Zirc Management"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/larayavrs/zirc-language"
+homepage = "https://github.com/larayavrs/zirc-language"
+description = "Lightweight, high-performance programming language designed for easy efficient code."
+keywords = ["language", "interpreter", "repl", "programming"]
+categories = ["development-tools", "compilers"]
+rust-version = "1.70"
+
+[workspace.dependencies]
+# Internal dependencies with consistent paths
+zirc-syntax = { path = "crates/zirc-syntax" }
+zirc-lexer = { path = "crates/zirc-lexer" }
+zirc-parser = { path = "crates/zirc-parser" }
+zirc-interpreter = { path = "crates/zirc-interpreter" }
+
+# External dependencies with version management
+owo-colors = "3"
+assert_cmd = "2"
+predicates = "3"
+tempfile = "3"
