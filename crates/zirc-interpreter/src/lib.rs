@@ -651,7 +651,9 @@ impl Interpreter {
                 out.push(c);
             }
         }
-        println!("{}", out);
+        if std::env::var("ZIRC_BENCH_SILENT").is_err() {
+            println!("{}", out);
+        }
         Ok(Value::Unit)
     }
 
@@ -661,7 +663,9 @@ impl Interpreter {
             return error("show() expects exactly 1 argument");
         }
         let val = self.eval_expr(env, &args[0])?;
-        println!("{}", val);
+        if std::env::var("ZIRC_BENCH_SILENT").is_err() {
+            println!("{}", val);
+        }
         Ok(Value::Unit)
     }
 
@@ -671,28 +675,35 @@ impl Interpreter {
             return error("prompt() expects 0 or 1 arguments");
         }
         
+        let silent = std::env::var("ZIRC_BENCH_SILENT").is_ok();
         // Optional prompt string
         if args.len() == 1 {
             let prompt = self.eval_expr(env, &args[0])?;
             match prompt {
                 Value::Str(s) => {
-                    print!("{}", s);
-                    io::stdout().flush().map_err(|e| format!("IO error: {}", e))?;
+                    if !silent {
+                        print!("{}", s);
+                        io::stdout().flush().map_err(|e| format!("IO error: {}", e))?;
+                    }
                 }
                 other => return error(format!("prompt() prompt must be string, got {:?}", other)),
             }
         }
         
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).map_err(|e| format!("IO error: {}", e))?;
-        
-        // Remove trailing newline
-        if input.ends_with('\n') {
-            input.pop();
-            if input.ends_with('\r') {
+        let input = if silent {
+            std::env::var("ZIRC_BENCH_PROMPT_REPLY").unwrap_or_default()
+        } else {
+            let mut input = String::new();
+            io::stdin().read_line(&mut input).map_err(|e| format!("IO error: {}", e))?;
+            // Remove trailing newline
+            if input.ends_with('\n') {
                 input.pop();
+                if input.ends_with('\r') {
+                    input.pop();
+                }
             }
-        }
+            input
+        };
         
         self.mem.strings_allocated += 1;
         self.mem.bytes_allocated += input.len();

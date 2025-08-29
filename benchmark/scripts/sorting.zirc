@@ -1,0 +1,25 @@
+~ Inversion count on a small array to exercise loops and comparisons (no list mutation)
+
+fun inversions(a) (int):
+  let n = 5
+  let count = 0
+  let i = 0
+  while i < n:
+    let j = i + 1
+    while j < n:
+      let ai = a[i]
+      let aj = a[j]
+      if ai > aj:
+        count = count + 1
+      end
+      j = j + 1
+    end
+    i = i + 1
+  end
+  return count
+end
+
+let arr = [5, 4, 3, 2, 1]
+let inv = inversions(arr)
+show(inv)
+

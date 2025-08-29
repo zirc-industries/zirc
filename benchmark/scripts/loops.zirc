@@ -1,0 +1,9 @@
+~ Tight loops without heavy I/O to measure loop overhead
+let sum = 0
+let i = 0
+while i < 10000:
+  sum = sum + i
+  i = i + 1
+end
+show(sum)
+
