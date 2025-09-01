@@ -20,6 +20,9 @@ zirc-lexer.workspace = true
 zirc-parser.workspace = true
 zirc-interpreter.workspace = true
 zirc-syntax.workspace = true
+zirc-bytecode.workspace = true
+zirc-compiler.workspace = true
+zirc-vm.workspace = true
 owo-colors.workspace = true
 
 [dev-dependencies]
