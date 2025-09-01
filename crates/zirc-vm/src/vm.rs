@@ -2,6 +2,7 @@
 
 use std::io::{self, Write};
 use std::fs;
+use std::collections::HashMap;
 
 use crate::display::display_value;
 use zirc_bytecode::{Builtin, Instruction, Program, Value};
@@ -22,16 +23,23 @@ enum CodeRef {
 
 pub struct Vm {
     stack: Vec<Value>,
+    globals: HashMap<String, Value>,
 }
 
 impl Default for Vm { fn default() -> Self { Self::new() } }
 
 impl Vm {
     pub fn new() -> Self {
-        Self { stack: Vec::new() }
+        Self { stack: Vec::new(), globals: HashMap::new() }
     }
 
-    pub fn run(&mut self, program: &Program) -> Result<()> {
+    pub fn globals_snapshot(&self) -> Vec<(String, Value)> {
+        let mut v: Vec<(String, Value)> = self.globals.iter().map(|(k, val)| (k.clone(), val.clone())).collect();
+        v.sort_by(|a, b| a.0.cmp(&b.0));
+        v
+    }
+
+    pub fn run(&mut self, program: &Program) -> Result<Option<Value>> {
         let mut frames: Vec<Frame> = Vec::new();
         frames.push(Frame {
             func_ref: CodeRef::Main,
@@ -39,6 +47,7 @@ impl Vm {
             locals: vec![Value::Unit; program.main.local_count],
         });
 
+        let mut last_value: Option<Value> = None;
         while let Some(frame) = frames.last_mut() {
             let func = match frame.func_ref {
                 CodeRef::Main => &program.main,
@@ -95,7 +104,7 @@ impl Vm {
                     let slot = frame.locals.get_mut(i).ok_or_else(|| "invalid local index")?;
                     *slot = v;
                 }
-                Instruction::Pop => { let _ = self.stack.pop(); }
+                Instruction::Pop => { let v = self.stack.pop(); if let Some(val) = v { last_value = Some(val); } }
                 Instruction::Add => {
                     let b = self.stack.pop().ok_or_else(|| "stack underflow in Add")?;
                     let a = self.stack.pop().ok_or_else(|| "stack underflow in Add")?;
@@ -289,9 +298,17 @@ impl Vm {
                     }
                 }
                 Instruction::Halt => { break; }
+                Instruction::LoadGlobal(name) => {
+                    let v = self.globals.get(&name).cloned().ok_or_else(|| format!("Undefined variable '{}'", name))?;
+                    self.stack.push(v);
+                }
+                Instruction::StoreGlobal(name) => {
+                    let v = self.stack.pop().ok_or_else(|| "stack underflow in StoreGlobal")?;
+                    self.globals.insert(name, v);
+                }
             }
         }
-        Ok(())
+        Ok(last_value)
     }
 }
 
