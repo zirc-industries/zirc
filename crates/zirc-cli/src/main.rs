@@ -60,7 +60,9 @@ fn parse_path<'a>(args: &'a [String]) -> Option<&'a str> {
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
-        repl::start_repl();
+        let backend = parse_backend(&args);
+        let mode = if backend == "vm" { repl::Backend::Vm } else { repl::Backend::Interp };
+        repl::start_repl_with_backend(mode);
         return;
     }
 
@@ -70,8 +72,9 @@ fn main() {
     let path = match parse_path(&args) {
         Some(p) => p,
         None => {
-            eprintln!("{}: {}", "error".red().bold(), "Missing file path".red());
-            std::process::exit(1);
+            let mode = if backend == "vm" { repl::Backend::Vm } else { repl::Backend::Interp };
+            repl::start_repl_with_backend(mode);
+            return;
         }
     };
     if !Path::new(path).exists() {
