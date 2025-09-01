@@ -1,0 +1,17 @@
+[package]
+name = "zirc-vm"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+description = "Stack-based virtual machine for the Zirc bytecode"
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+zirc-bytecode.workspace = true
+zirc-syntax.workspace = true
+
