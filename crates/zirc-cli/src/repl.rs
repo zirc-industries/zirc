@@ -10,6 +10,7 @@ use zirc_syntax::token::TokenKind;
 use zirc_compiler::Compiler;
 use zirc_vm::Vm;
 
+#[allow(dead_code)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Backend { Interp, Vm }
 
@@ -27,9 +28,6 @@ pub fn start_repl_with_backend(backend: Backend) {
     }
 }
 
-pub fn start_repl() {
-    start_repl_with_backend(Backend::Interp)
-}
 
 fn repl_interpreter() {
     let mut interpreter = Interpreter::new();
