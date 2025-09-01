@@ -7,6 +7,9 @@ members = [
     "crates/zirc-cli", 
     "crates/zirc-fmt",
     "crates/zirc-bench",
+    "crates/zirc-bytecode",
+    "crates/zirc-compiler",
+    "crates/zirc-vm",
 ]
 resolver = "2"
 
