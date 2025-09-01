@@ -17,7 +17,7 @@ fn workspace_root() -> PathBuf {
 fn runs_factorial_example() {
     let root = workspace_root();
     let mut cmd = Command::cargo_bin("zirc-cli").unwrap();
-    cmd.arg(root.join("examples/factorial.zirc"));
+    cmd.arg(root.join("examples/others/factorial.zirc"));
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("fact(5) = 120"));
@@ -27,7 +27,7 @@ fn runs_factorial_example() {
 fn runs_conditionals_example() {
     let root = workspace_root();
     let mut cmd = Command::cargo_bin("zirc-cli").unwrap();
-    cmd.arg(root.join("examples/conditionals.zirc"));
+    cmd.arg(root.join("examples/basic/conditionals.zirc"));
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("3 is less than 5"));

@@ -15,12 +15,14 @@ pub(crate) struct FuncBuilder {
     locals: Locals,
     // loop stack
     loop_stack: Vec<LoopCtx>,
+    // when true, compile idents/lets/assigns to globals if not local
+    global_mode: bool,
 }
 
 impl FuncBuilder {
-    pub(crate) fn new(name: String, arity: usize) -> Self {
+pub(crate) fn new(name: String, arity: usize, global_mode: bool) -> Self {
         // Locals start at 0; params will occupy slots [0..arity)
-        Self { name, arity, code: Vec::new(), locals: Locals::new(0), loop_stack: Vec::new() }
+        Self { name, arity, code: Vec::new(), locals: Locals::new(0), loop_stack: Vec::new(), global_mode }
     }
 
     pub(crate) fn finish(self) -> BcFunction {
@@ -49,15 +51,24 @@ impl FuncBuilder {
     pub(crate) fn emit_stmt(&mut self, c: &Compiler, s: &Stmt) -> Result<()> {
         match s {
             Stmt::Let { name, expr, .. } => {
-                let slot = self.declare_var(name.clone())?;
                 self.emit_expr(c, expr)?;
-                self.emit(BC::StoreLocal(slot));
+                if self.global_mode {
+                    self.emit(BC::StoreGlobal(name.clone()));
+                } else {
+                    let slot = self.declare_var(name.clone())?;
+                    self.emit(BC::StoreLocal(slot));
+                }
                 Ok(())
             }
             Stmt::Assign { name, expr } => {
-                let slot = self.resolve_var(name)?;
                 self.emit_expr(c, expr)?;
-                self.emit(BC::StoreLocal(slot));
+                if let Ok(slot) = self.resolve_var(name) {
+                    self.emit(BC::StoreLocal(slot));
+                } else if self.global_mode {
+                    self.emit(BC::StoreGlobal(name.clone()));
+                } else {
+                    return error(format!("Undefined variable '{}'", name));
+                }
                 Ok(())
             }
             Stmt::Return(opt) => {
@@ -95,13 +106,21 @@ impl FuncBuilder {
                 Ok(())
             }
             Stmt::For { var, start, end, body } => {
-                // declare loop var and end bound temporary
-                let i_slot = self.declare_var(var.clone())?;
-                self.emit_expr(c, start)?; self.emit(BC::StoreLocal(i_slot));
+                // If in global mode, use globals for the loop var; otherwise, use a local.
                 let end_slot = self.locals.alloc_temp();
                 self.emit_expr(c, end)?; self.emit(BC::StoreLocal(end_slot));
+                if self.global_mode {
+                    self.emit_expr(c, start)?; self.emit(BC::StoreGlobal(var.clone()));
+                } else {
+                    let i_slot = self.declare_var(var.clone())?;
+                    self.emit_expr(c, start)?; self.emit(BC::StoreLocal(i_slot));
+                }
                 let loop_start = self.here();
-                self.emit(BC::LoadLocal(i_slot));
+                if self.global_mode {
+                    self.emit(BC::LoadGlobal(var.clone()));
+                } else {
+                    let slot = self.resolve_var(var)?; self.emit(BC::LoadLocal(slot));
+                }
                 self.emit(BC::LoadLocal(end_slot));
                 self.emit(BC::Lt);
                 let jf_at = self.emit(BC::JumpIfFalse(0));
@@ -113,10 +132,18 @@ impl FuncBuilder {
                     let ctx = self.loop_stack.last_mut().unwrap();
                     ctx.continue_target = Some(incr_ip);
                 }
-                self.emit(BC::LoadLocal(i_slot));
-                self.emit(BC::PushInt(1));
-                self.emit(BC::Add);
-                self.emit(BC::StoreLocal(i_slot));
+                if self.global_mode {
+                    self.emit(BC::LoadGlobal(var.clone()));
+                    self.emit(BC::PushInt(1));
+                    self.emit(BC::Add);
+                    self.emit(BC::StoreGlobal(var.clone()));
+                } else {
+                    let slot = self.resolve_var(var)?;
+                    self.emit(BC::LoadLocal(slot));
+                    self.emit(BC::PushInt(1));
+                    self.emit(BC::Add);
+                    self.emit(BC::StoreLocal(slot));
+                }
                 self.emit(BC::Jump(loop_start));
                 // end label
                 self.patch_to_here(jf_at)?;
@@ -155,8 +182,13 @@ impl FuncBuilder {
             Expr::LiteralString(s) => { self.emit(BC::PushStr(s.clone())); Ok(()) }
             Expr::LiteralBool(b) => { self.emit(BC::PushBool(*b)); Ok(()) }
             Expr::Ident(name) => {
-                let slot = self.resolve_var(name)?;
-                self.emit(BC::LoadLocal(slot));
+                if let Ok(slot) = self.resolve_var(name) {
+                    self.emit(BC::LoadLocal(slot));
+                } else if self.global_mode {
+                    self.emit(BC::LoadGlobal(name.clone()));
+                } else {
+                    return error(format!("Undefined variable '{}'", name));
+                }
                 Ok(())
             }
             Expr::BinaryAdd(a,b) => { self.emit_expr(c,a)?; self.emit_expr(c,b)?; self.emit(BC::Add); Ok(()) }

@@ -1,7 +1,6 @@
 mod repl;
 
 use std::fs;
-use std::path::Path;
 
 use owo_colors::OwoColorize;
 use zirc_interpreter::Interpreter;
@@ -57,38 +56,56 @@ fn parse_path<'a>(args: &'a [String]) -> Option<&'a str> {
     None
 }
 
+fn normalize_path(p: &str) -> std::path::PathBuf {
+    let pb = std::path::PathBuf::from(p);
+    if pb.exists() {
+        return pb;
+    }
+    #[cfg(windows)]
+    {
+        let alt = p.replace('/', std::path::MAIN_SEPARATOR_STR);
+        let altpb = std::path::PathBuf::from(&alt);
+        if altpb.exists() { return altpb; }
+    }
+    pb
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
-        repl::start_repl();
+        let backend = parse_backend(&args);
+        let mode = if backend == "vm" { repl::Backend::Vm } else { repl::Backend::Interp };
+        repl::start_repl_with_backend(mode);
         return;
     }
 
     let backend = parse_backend(&args);
 
     // first non-flag arg treated as path, skipping flag values
-    let path = match parse_path(&args) {
+    let path_str = match parse_path(&args) {
         Some(p) => p,
         None => {
-            eprintln!("{}: {}", "error".red().bold(), "Missing file path".red());
-            std::process::exit(1);
+            let mode = if backend == "vm" { repl::Backend::Vm } else { repl::Backend::Interp };
+            repl::start_repl_with_backend(mode);
+            return;
         }
     };
-    if !Path::new(path).exists() {
+    let path_buf = normalize_path(path_str);
+    if !path_buf.exists() {
         eprintln!(
             "{}: {}",
             "error".red().bold(),
-            format!("File not found: {}", path).red()
+            format!("File not found: {}", path_str).red()
         );
         std::process::exit(1);
     }
-    let src = match fs::read_to_string(path) {
+    let src = match fs::read_to_string(&path_buf) {
         Ok(s) => s,
         Err(e) => {
             eprintln!(
                 "{}: {}",
                 "error".red().bold(),
-                format!("Failed to read {}: {}", path, e).red()
+                format!("Failed to read {}: {}", path_buf.display(), e).red()
             );
             std::process::exit(1);
         }

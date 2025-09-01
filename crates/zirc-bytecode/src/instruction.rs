@@ -18,6 +18,10 @@ pub enum Instruction {
     LoadLocal(u16),
     StoreLocal(u16),
 
+    // Globals (by name)
+    LoadGlobal(String),
+    StoreGlobal(String),
+
     // Stack
     Pop,
 
