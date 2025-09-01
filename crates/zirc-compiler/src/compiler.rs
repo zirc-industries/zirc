@@ -20,6 +20,12 @@ impl Compiler {
         Self { func_indices: HashMap::new(), functions: Vec::new() }
     }
 
+    pub fn function_names(&self) -> Vec<String> {
+        let mut v: Vec<String> = self.func_indices.keys().cloned().collect();
+        v.sort();
+        v
+    }
+
     pub fn compile(&mut self, program: Program) -> Result<BcProgram> {
         // First pass: collect function names to assign indices
         for item in &program.items {
@@ -39,7 +45,7 @@ impl Compiler {
             }
         }
         // Compile main (top-level statements)
-        let mut main_builder = FuncBuilder::new("__main".to_string(), 0);
+        let mut main_builder = FuncBuilder::new("__main".to_string(), 0, true);
         for item in program.items.into_iter() {
             if let Item::Stmt(s) = item { main_builder.emit_stmt(self, &s)?; }
         }
@@ -49,7 +55,7 @@ impl Compiler {
     }
 
     fn compile_function(&mut self, f: &Function) -> Result<BcFunction> {
-        let mut b = FuncBuilder::new(f.name.clone(), f.params.len());
+        let mut b = FuncBuilder::new(f.name.clone(), f.params.len(), false);
         for p in &f.params { b.declare_param(p.name.clone())?; }
         for s in &f.body { b.emit_stmt(self, s)?; }
         b.emit(BC::PushUnit);
