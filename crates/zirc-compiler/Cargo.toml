@@ -1,0 +1,17 @@
+[package]
+name = "zirc-compiler"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+description = "AST to bytecode compiler for the Zirc programming language"
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+zirc-syntax.workspace = true
+zirc-bytecode.workspace = true
+
