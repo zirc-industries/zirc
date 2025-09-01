@@ -1,0 +1,71 @@
+//! Bytecode compiler from AST to IR.
+
+use std::collections::HashMap;
+
+use zirc_bytecode::{Function as BcFunction, Instruction as BC, Program as BcProgram};
+use zirc_syntax::ast::*;
+use zirc_syntax::error::{Result, error};
+
+use crate::builder::FuncBuilder;
+
+pub struct Compiler {
+    pub(crate) func_indices: HashMap<String, usize>,
+    pub(crate) functions: Vec<BcFunction>,
+}
+
+impl Default for Compiler { fn default() -> Self { Self::new() } }
+
+impl Compiler {
+    pub fn new() -> Self {
+        Self { func_indices: HashMap::new(), functions: Vec::new() }
+    }
+
+    pub fn compile(&mut self, program: Program) -> Result<BcProgram> {
+        // First pass: collect function names to assign indices
+        for item in &program.items {
+            if let Item::Function(f) = item {
+                if self.func_indices.contains_key(&f.name) { return error(format!("Duplicate function '{}'", f.name)); }
+                let idx = self.functions.len();
+                self.func_indices.insert(f.name.clone(), idx);
+                self.functions.push(BcFunction { name: f.name.clone(), arity: f.params.len(), local_count: 0, code: Vec::new() });
+            }
+        }
+        // Second pass: compile functions
+        for item in &program.items {
+            if let Item::Function(f) = item {
+                let idx = *self.func_indices.get(&f.name).unwrap();
+                let compiled = self.compile_function(f)?;
+                self.functions[idx] = compiled;
+            }
+        }
+        // Compile main (top-level statements)
+        let mut main_builder = FuncBuilder::new("__main".to_string(), 0);
+        for item in program.items.into_iter() {
+            if let Item::Stmt(s) = item { main_builder.emit_stmt(self, &s)?; }
+        }
+        main_builder.emit(BC::Halt);
+        let main = main_builder.finish();
+        Ok(BcProgram { functions: self.functions.clone(), main })
+    }
+
+    fn compile_function(&mut self, f: &Function) -> Result<BcFunction> {
+        let mut b = FuncBuilder::new(f.name.clone(), f.params.len());
+        for p in &f.params { b.declare_param(p.name.clone())?; }
+        for s in &f.body { b.emit_stmt(self, s)?; }
+        b.emit(BC::PushUnit);
+        b.emit(BC::Return);
+        Ok(b.finish())
+    }
+}
+
+pub(crate) fn builtin_of(name: &str) -> Option<zirc_bytecode::Builtin> {
+    match name {
+        "show" => Some(zirc_bytecode::Builtin::Show),
+        "showf" => Some(zirc_bytecode::Builtin::ShowF),
+        "prompt" => Some(zirc_bytecode::Builtin::Prompt),
+        "rf" => Some(zirc_bytecode::Builtin::Rf),
+        "wf" => Some(zirc_bytecode::Builtin::Wf),
+        _ => None,
+    }
+}
+
