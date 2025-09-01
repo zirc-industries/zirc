@@ -308,8 +308,8 @@ impl Locals {
     fn pop_scope(&mut self) { let _ = self.scopes.pop(); }
 }
 
-struct LoopCtx { breaks: Vec<usize>, continues: Vec<usize>, start: usize, continue_target: Option<usize> }
-impl LoopCtx { fn new(start: usize) -> Self { Self { breaks: Vec::new(), continues: Vec::new(), start, continue_target: None } } }
+struct LoopCtx { breaks: Vec<usize>, continues: Vec<usize>, _start: usize, continue_target: Option<usize> }
+impl LoopCtx { fn new(_start: usize) -> Self { Self { breaks: Vec::new(), continues: Vec::new(), _start, continue_target: None } } }
 
 fn builtin_of(name: &str) -> Option<Builtin> {
     match name {
