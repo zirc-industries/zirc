@@ -3,7 +3,7 @@
 use std::io::{self, Write};
 use std::fs;
 
-use zirc_bytecode::{Builtin, Function, Instruction, Program, Value};
+use zirc_bytecode::{Builtin, Instruction, Program, Value};
 use zirc_syntax::error::{Result, error};
 
 #[derive(Clone)]
@@ -62,7 +62,7 @@ impl Vm {
                 Instruction::MakeList(n) => {
                     if self.stack.len() < n { return error("stack underflow in MakeList"); }
                     let start = self.stack.len() - n;
-                    let mut elems = self.stack.drain(start..).collect::<Vec<_>>();
+                    let elems = self.stack.drain(start..).collect::<Vec<_>>();
                     // elems are in original order already because we drained a slice
                     self.stack.push(Value::List(elems));
                 }
