@@ -1,0 +1,13 @@
+~ Recursive factorial with minimal I/O
+fun fact(n) (int):
+  if n == 0:
+    return 1
+  else:
+    return n * fact(n - 1)
+  end
+end
+
+let n = 10
+let r = fact(n)
+showf("fact(%d) = %d", n, r)
+
