@@ -27,6 +27,9 @@ zirc-syntax = { path = "crates/zirc-syntax" }
 zirc-lexer = { path = "crates/zirc-lexer" }
 zirc-parser = { path = "crates/zirc-parser" }
 zirc-interpreter = { path = "crates/zirc-interpreter" }
+zirc-bytecode = { path = "crates/zirc-bytecode" }
+zirc-compiler = { path = "crates/zirc-compiler" }
+zirc-vm = { path = "crates/zirc-vm" }
 
 # External dependencies with version management
 owo-colors = "3"
