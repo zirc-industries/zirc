@@ -1,0 +1,36 @@
+{
+  "name": "Zirc Dev",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {},
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "latest",
+      "profile": "default"
+    }
+  },
+  "containerEnv": {
+    "CARGO_REGISTRIES_CRATES_IO_PROTOCOL": "sparse"
+  },
+  "mounts": [
+    "source=zirc-cargo-registry,target=/usr/local/cargo/registry,type=volume",
+    "source=zirc-cargo-git,target=/usr/local/cargo/git,type=volume"
+  ],
+  "postCreateCommand": "rustup component add rustfmt clippy && cargo build --workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "serayuzgur.crates",
+        "EditorConfig.EditorConfig"
+      ],
+      "settings": {
+        "rust-analyzer.cargo.allFeatures": true,
+        "rust-analyzer.check.command": "clippy",
+        "editor.formatOnSave": true
+      }
+    }
+  },
+  "remoteUser": "vscode"
+}
+
