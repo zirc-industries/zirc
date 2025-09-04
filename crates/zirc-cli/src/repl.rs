@@ -1,5 +1,8 @@
 use std::io::{self, Write};
 
+use winapi::shared::minwindef::DWORD;
+use windows::Win32::System::Console::{GetConsoleCP, SetConsoleOutputCP};
+
 use owo_colors::OwoColorize;
 use zirc_interpreter::{Env, Interpreter, MemoryStats, Value};
 use zirc_lexer::Lexer;
@@ -15,11 +18,12 @@ use zirc_vm::Vm;
 pub enum Backend { Interp, Vm }
 
 pub fn start_repl_with_backend(backend: Backend) {
+    let version = env!("CARGO_PKG_VERSION");
     println!(
         "{}",
-        format!("Zirc REPL (backend: {}). Type :help for help, :quit to exit.", match backend { Backend::Interp => "interp", Backend::Vm => "vm" })
+        format!("Zirc v{} REPL (backend: {}). Type :help for help, :quit to exit.", version, match backend { Backend::Interp => "interp", Backend::Vm => "vm" })
             .bold()
-            .green()
+            .bright_black()
     );
 
     match backend {
@@ -33,9 +37,21 @@ fn repl_interpreter() {
     let mut interpreter = Interpreter::new();
     let mut env = Env::new_root();
 
+    let utf8_cp: DWORD = 65001;
+    let result = unsafe { SetConsoleOutputCP(utf8_cp) };
+    if !result.as_bool() {
+        let err_code = unsafe { GetConsoleCP() };
+        let err_msg = format!("Failed to set console code page to UTF-8. Error code: {}", err_code);
+        eprintln!("{}", err_msg.red());
+        return;
+    }
+
     let mut buffer = String::new();
     loop {
-        let prompt = if buffer.is_empty() { "zirc> ".cyan().to_string() } else { "... > ".cyan().to_string() };
+        // this hexagon is used in the initial of the prompt
+        // TODO: fix its display because in some terminals looks like [?]
+        let hexagon_unicode = '\u{2b22}';
+        let prompt = if buffer.is_empty() { format!("{} ", hexagon_unicode).white().to_string() } else { "... > ".bright_white().to_string() };
         print!("{}", prompt);
         let _ = io::stdout().flush();
 
@@ -51,7 +67,7 @@ fn repl_interpreter() {
                 ":vars" => { print_vars_interp(&env); continue; }
                 ":funcs" => { print_funcs_interp(&interpreter); continue; }
                 ":mem" => { print_mem(&interpreter); continue; }
-                ":reset" => { interpreter.reset(); env = Env::new_root(); println!("{}", "State reset.".yellow()); continue; }
+                ":reset" => { interpreter.reset(); env = Env::new_root(); println!("{}", "State reset.".green()); continue; }
                 _ => { println!("{}", "Unknown command. Type :help.".red()); continue; }
             }
         }
