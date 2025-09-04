@@ -1,0 +1,2 @@
+~ Test intentional errors
+let x: string = 123

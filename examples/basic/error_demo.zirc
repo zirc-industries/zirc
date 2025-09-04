@@ -1,0 +1,17 @@
+~ Error handling demonstration
+
+~ This will work fine:
+let x = 42
+showf("x = %d", x)
+
+~ This will cause a type error:
+~ let y: string = 123
+
+~ This will cause an undefined variable error:
+~ showf("undefined: %s", undefined_var)
+
+~ This will cause an index out of bounds error:
+let list = [1, 2, 3]
+~ let item = list[10]
+
+showf("Demo completed successfully!")

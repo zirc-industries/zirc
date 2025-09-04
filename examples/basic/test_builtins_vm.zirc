@@ -1,0 +1,29 @@
+~ Test new built-in functions (VM compatible)
+
+~ Test len function
+let message = "Hello World"
+showf("Length of '%s': %d", message, len(message))
+
+let numbers = [1, 2, 3, 4, 5]
+showf("Length of list: %d", len(numbers))
+
+~ Test string concatenation
+let hello = "Hello"
+let world = "World"
+let greeting = hello + " " + world + "!"
+showf("Concatenated: %s", greeting)
+
+~ Test list concatenation
+let first = [1, 2, 3]
+let second = [4, 5, 6]
+let combined = first + second
+showf("Combined list: %s", combined)
+
+~ Test slice function
+let text = "Programming"
+showf("Slice 'Programming'[0:4]: '%s'", slice(text, 0, 4))
+showf("Slice 'Programming'[4:11]: '%s'", slice(text, 4, 11))
+
+let nums = [10, 20, 30, 40, 50]
+let subset = slice(nums, 1, 4)
+showf("List slice [10,20,30,40,50][1:4]: %s", subset)
