@@ -166,6 +166,7 @@ impl Interpreter {
             Expr::BinaryAdd(a, b) => match (self.eval_expr(env, a)?, self.eval_expr(env, b)?) {
                 (Value::Int(x), Value::Int(y)) => Ok(Value::Int(x + y)),
                 (Value::Str(x), Value::Str(y)) => { let r = format!("{}{}", x, y); self.mem.strings_allocated += 1; self.mem.bytes_allocated += r.len(); Ok(Value::Str(r)) }
+                (Value::List(mut x), Value::List(y)) => { x.extend(y); Ok(Value::List(x)) }
                 (x, y) => error(format!("Cannot add {:?} and {:?}", x, y)),
             },
             Expr::BinarySub(a, b) => match (self.eval_expr(env, a)?, self.eval_expr(env, b)?) {
@@ -227,6 +228,10 @@ impl Interpreter {
                     "prompt" => return self.call_prompt(env, args),
                     "rf" => return self.call_rf(env, args),
                     "wf" => return self.call_wf(env, args),
+                    "len" => return self.call_len(env, args),
+                    "push" => return self.call_push(env, args),
+                    "pop" => return self.call_pop(env, args),
+                    "slice" => return self.call_slice(env, args),
                     _ => {}
                 }
                 let func = self
@@ -357,6 +362,124 @@ impl Interpreter {
         let content = match self.eval_expr(env, &args[1])? { Value::Str(s) => s, other => return error(format!("wf() content must be string, got {:?}", other)) };
         fs::write(&path, &content).map_err(|e| format!("Failed to write file '{}': {}", path, e))?;
         Ok(Value::Unit)
+    }
+
+    /// Length function - returns length of string or list
+    fn call_len(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 1 { return error("len() expects exactly 1 argument"); }
+        let val = self.eval_expr(env, &args[0])?;
+        match val {
+            Value::Str(s) => Ok(Value::Int(s.chars().count() as i64)),
+            Value::List(items) => Ok(Value::Int(items.len() as i64)),
+            other => error(format!("len() expects string or list, got {:?}", other)),
+        }
+    }
+
+    /// Push function - adds element to end of list (mutates the list)
+    fn call_push(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 2 { return error("push() expects exactly 2 arguments: list_variable and value"); }
+        
+        // First argument must be an identifier (variable name)
+        let var_name = match &args[0] {
+            Expr::Ident(name) => name,
+            _ => return error("push() first argument must be a variable name"),
+        };
+        
+        // Get the current value and ensure it's a list
+        let current = env.get(var_name)
+            .ok_or_else(|| format!("Undefined variable '{}'", var_name))?;
+        
+        let mut list = match current.value {
+            Value::List(items) => items,
+            other => return error(format!("push() expects list variable, got {:?}", other)),
+        };
+        
+        // Evaluate the value to push
+        let value = self.eval_expr(env, &args[1])?;
+        
+        // Add the value to the list
+        list.push(value);
+        
+        // Update the variable
+        env.assign(var_name, Value::List(list))?;
+        
+        Ok(Value::Unit)
+    }
+
+    /// Pop function - removes and returns last element from list
+    fn call_pop(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 1 { return error("pop() expects exactly 1 argument: list_variable"); }
+        
+        // First argument must be an identifier (variable name)
+        let var_name = match &args[0] {
+            Expr::Ident(name) => name,
+            _ => return error("pop() first argument must be a variable name"),
+        };
+        
+        // Get the current value and ensure it's a list
+        let current = env.get(var_name)
+            .ok_or_else(|| format!("Undefined variable '{}'", var_name))?;
+        
+        let mut list = match current.value {
+            Value::List(items) => items,
+            other => return error(format!("pop() expects list variable, got {:?}", other)),
+        };
+        
+        // Pop the last element
+        let popped = list.pop().ok_or_else(|| "Cannot pop from empty list")?;
+        
+        // Update the variable
+        env.assign(var_name, Value::List(list))?;
+        
+        Ok(popped)
+    }
+
+    /// Slice function - returns a portion of a string or list
+    fn call_slice(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 3 { return error("slice() expects exactly 3 arguments: collection, start, end"); }
+        
+        let collection = self.eval_expr(env, &args[0])?;
+        let start = match self.eval_expr(env, &args[1])? {
+            Value::Int(n) => n,
+            other => return error(format!("slice() start index must be int, got {:?}", other)),
+        };
+        let end = match self.eval_expr(env, &args[2])? {
+            Value::Int(n) => n,
+            other => return error(format!("slice() end index must be int, got {:?}", other)),
+        };
+        
+        if start < 0 { return error("slice() start index cannot be negative"); }
+        if end < start { return error("slice() end index must be >= start index"); }
+        
+        match collection {
+            Value::Str(s) => {
+                let chars: Vec<char> = s.chars().collect();
+                let start_idx = start as usize;
+                let end_idx = (end as usize).min(chars.len());
+                
+                if start_idx >= chars.len() {
+                    let result = String::new();
+                    self.mem.strings_allocated += 1;
+                    return Ok(Value::Str(result));
+                }
+                
+                let slice: String = chars[start_idx..end_idx].iter().collect();
+                self.mem.strings_allocated += 1;
+                self.mem.bytes_allocated += slice.len();
+                Ok(Value::Str(slice))
+            },
+            Value::List(items) => {
+                let start_idx = start as usize;
+                let end_idx = (end as usize).min(items.len());
+                
+                if start_idx >= items.len() {
+                    return Ok(Value::List(Vec::new()));
+                }
+                
+                Ok(Value::List(items[start_idx..end_idx].to_vec()))
+            },
+            other => error(format!("slice() expects string or list, got {:?}", other)),
+        }
     }
 }
 
