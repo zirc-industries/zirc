@@ -71,6 +71,10 @@ pub(crate) fn builtin_of(name: &str) -> Option<zirc_bytecode::Builtin> {
         "prompt" => Some(zirc_bytecode::Builtin::Prompt),
         "rf" => Some(zirc_bytecode::Builtin::Rf),
         "wf" => Some(zirc_bytecode::Builtin::Wf),
+        "len" => Some(zirc_bytecode::Builtin::Len),
+        "push" => Some(zirc_bytecode::Builtin::Push),
+        "pop" => Some(zirc_bytecode::Builtin::Pop),
+        "slice" => Some(zirc_bytecode::Builtin::Slice),
         _ => None,
     }
 }
