@@ -111,6 +111,7 @@ impl Vm {
                     match (a, b) {
                         (Value::Int(x), Value::Int(y)) => self.stack.push(Value::Int(x + y)),
                         (Value::Str(x), Value::Str(y)) => self.stack.push(Value::Str(format!("{}{}", x, y))),
+                        (Value::List(mut x), Value::List(y)) => { x.extend(y); self.stack.push(Value::List(x)); }
                         (x, y) => return error(format!("Cannot add {:?} and {:?}", x, y)),
                     }
                 }
@@ -294,6 +295,61 @@ impl Vm {
                             let content = match &args[1] { Value::Str(s) => s.clone(), _ => return error("wf() content must be string") };
                             fs::write(&path, &content).map_err(|e| format!("Failed to write file '{}': {}", path, e))?;
                             self.stack.push(Value::Unit);
+                        }
+                        Builtin::Len => {
+                            if args.len() != 1 { return error("len() expects exactly 1 argument"); }
+                            match &args[0] {
+                                Value::Str(s) => self.stack.push(Value::Int(s.chars().count() as i64)),
+                                Value::List(items) => self.stack.push(Value::Int(items.len() as i64)),
+                                other => return error(format!("len() expects string or list, got {:?}", other)),
+                            }
+                        }
+                        Builtin::Push => {
+                            return error("push() is not supported in VM mode - use the interpreter backend");
+                        }
+                        Builtin::Pop => {
+                            return error("pop() is not supported in VM mode - use the interpreter backend");
+                        }
+                        Builtin::Slice => {
+                            if args.len() != 3 { return error("slice() expects exactly 3 arguments: collection, start, end"); }
+                            
+                            let start = match &args[1] {
+                                Value::Int(n) => *n,
+                                other => return error(format!("slice() start index must be int, got {:?}", other)),
+                            };
+                            let end = match &args[2] {
+                                Value::Int(n) => *n,
+                                other => return error(format!("slice() end index must be int, got {:?}", other)),
+                            };
+                            
+                            if start < 0 { return error("slice() start index cannot be negative"); }
+                            if end < start { return error("slice() end index must be >= start index"); }
+                            
+                            match &args[0] {
+                                Value::Str(s) => {
+                                    let chars: Vec<char> = s.chars().collect();
+                                    let start_idx = start as usize;
+                                    let end_idx = (end as usize).min(chars.len());
+                                    
+                                    if start_idx >= chars.len() {
+                                        self.stack.push(Value::Str(String::new()));
+                                    } else {
+                                        let slice: String = chars[start_idx..end_idx].iter().collect();
+                                        self.stack.push(Value::Str(slice));
+                                    }
+                                },
+                                Value::List(items) => {
+                                    let start_idx = start as usize;
+                                    let end_idx = (end as usize).min(items.len());
+                                    
+                                    if start_idx >= items.len() {
+                                        self.stack.push(Value::List(Vec::new()));
+                                    } else {
+                                        self.stack.push(Value::List(items[start_idx..end_idx].to_vec()));
+                                    }
+                                },
+                                other => return error(format!("slice() expects string or list, got {:?}", other)),
+                            }
                         }
                     }
                 }
