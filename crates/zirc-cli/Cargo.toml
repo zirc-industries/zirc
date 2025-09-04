@@ -24,6 +24,8 @@ zirc-bytecode.workspace = true
 zirc-compiler.workspace = true
 zirc-vm.workspace = true
 owo-colors.workspace = true
+windows.workspace = true
+winapi.workspace = true
 
 [dev-dependencies]
 assert_cmd.workspace = true
