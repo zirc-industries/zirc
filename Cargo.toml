@@ -18,8 +18,8 @@ version = "0.0.1-dev"
 edition = "2021"
 authors = ["Zirc Management"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/larayavrs/zirc-language"
-homepage = "https://github.com/larayavrs/zirc-language"
+repository = "https://github.com/zirc-industries/zirc"
+homepage = "https://github.com/zirc-industries/zirc"
 description = "Lightweight, high-performance programming language designed for easy efficient code."
 keywords = ["language", "interpreter", "repl", "programming"]
 categories = ["development-tools", "compilers"]
@@ -40,3 +40,5 @@ owo-colors = "3"
 assert_cmd = "2"
 predicates = "3"
 tempfile = "3"
+windows = { version = "0.48", features = ["Win32_Foundation", "Win32_System_Console"] }
+winapi = { version = "0.3.9", features = ["winuser"] }
