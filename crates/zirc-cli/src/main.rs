@@ -15,17 +15,34 @@ use zirc_vm::Vm;
 fn render_error(kind: &str, source: &str, err: &Error) {
     eprintln!("{}: {}", kind.red().bold(), err.msg.red());
     if let (Some(line), Some(col)) = (err.line, err.col) {
+        eprintln!("  --> line {}, column {}", line, col);
         if let Some(src_line) = source.lines().nth(line - 1) {
-            eprintln!("  {}", src_line.bright_black());
+            let line_num_str = format!("{:3} | ", line);
+            eprintln!("     |");
+            eprintln!("{}{}", line_num_str.bright_black(), src_line);
+            
             let mut marker = String::new();
+            marker.push_str(&" ".repeat(line_num_str.len()));
             if col > 1 {
                 marker.push_str(&" ".repeat(col - 1));
             }
-            marker.push('^');
-            eprintln!("  {}", marker.red());
-        } else {
-            eprintln!("  at {}:{}", line, col);
+            marker.push_str("^");
+            eprintln!("{}{}", marker.red(), " error here".red());
+            eprintln!("     |");
         }
+    }
+    
+    // Add helpful suggestions based on common errors
+    if err.msg.contains("Undefined variable") {
+        eprintln!("{}", "Help: Did you forget to declare this variable with 'let'?".yellow());
+    } else if err.msg.contains("Undefined function") {
+        eprintln!("{}", "Help: Check if the function name is spelled correctly or if it's defined.".yellow());
+    } else if err.msg.contains("Type mismatch") {
+        eprintln!("{}", "Help: Make sure the value matches the declared type annotation.".yellow());
+    } else if err.msg.contains("index out of bounds") {
+        eprintln!("{}", "Help: Make sure the index is within the bounds of the list or string.".yellow());
+    } else if err.msg.contains("Cannot add") {
+        eprintln!("{}", "Help: Make sure both operands are of compatible types (int+int, string+string, list+list).".yellow());
     }
 }
 
