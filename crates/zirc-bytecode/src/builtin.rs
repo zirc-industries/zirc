@@ -7,5 +7,9 @@ pub enum Builtin {
     Prompt,
     Rf,
     Wf,
+    Len,
+    Push,
+    Pop,
+    Slice,
 }
 
