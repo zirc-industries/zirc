@@ -17,6 +17,8 @@ pub enum Builtin {
     Max,
     Pow,
     Sqrt,
+    Hex,
+    Bin,
     // String functions
     Upper,
     Lower,
