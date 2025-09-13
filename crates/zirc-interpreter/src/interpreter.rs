@@ -238,6 +238,8 @@ impl Interpreter {
                     "max" => return self.call_max(env, args),
                     "pow" => return self.call_pow(env, args),
                     "sqrt" => return self.call_sqrt(env, args),
+                    "hex" => return self.call_hex(env, args),
+                    "bin" => return self.call_bin(env, args),
                     // String functions
                     "upper" => return self.call_upper(env, args),
                     "lower" => return self.call_lower(env, args),
@@ -559,6 +561,36 @@ impl Interpreter {
                 Ok(Value::Int(result))
             },
             other => error(format!("sqrt() expects int, got {:?}", other)),
+        }
+    }
+
+    /// Hexadecimal function converts integer to hex string
+    fn call_hex(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 1 { return error("hex() expects exactly 1 argument"); }
+        let val = self.eval_expr(env, &args[0])?;
+        match val {
+            Value::Int(n) => {
+                let result = format!("0x{:x}", n);
+                self.mem.strings_allocated += 1;
+                self.mem.bytes_allocated += result.len();
+                Ok(Value::Str(result))
+            },
+            other => error(format!("hex() expects int, got {:?}", other)),
+        }
+    }
+
+    /// Binary function converts integer to binary string
+    fn call_bin(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 1 { return error("bin() expects exactly 1 argument"); }
+        let val = self.eval_expr(env, &args[0])?;
+        match val {
+            Value::Int(n) => {
+                let result = format!("0b{:b}", n);
+                self.mem.strings_allocated += 1;
+                self.mem.bytes_allocated += result.len();
+                Ok(Value::Str(result))
+            },
+            other => error(format!("bin() expects int, got {:?}", other)),
         }
     }
     
