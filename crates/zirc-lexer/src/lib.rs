@@ -7,7 +7,7 @@ pub use lexer::Lexer;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use zirc_syntax::token::{Token, TokenKind};
+    use zirc_syntax::token::TokenKind;
 
     fn expect_tokens(input: &str, expected: Vec<TokenKind>) {
         let mut lexer = Lexer::new(input);
