@@ -48,10 +48,10 @@ fn repl_interpreter() {
 
     let mut buffer = String::new();
     loop {
-        // this hexagon is used in the initial of the prompt
-        // TODO: fix its display because in some terminals looks like [?]
-        let hexagon_unicode = '\u{2b22}';
-        let prompt = if buffer.is_empty() { format!("{} ", hexagon_unicode).white().to_string() } else { "... > ".bright_white().to_string() };
+        // Use a simple, compatible character for the prompt
+        // Original hexagon \u{2b22} showed as [?] in some terminals
+        let prompt_char = '>';
+        let prompt = if buffer.is_empty() { format!("{} ", prompt_char).white().to_string() } else { "... > ".bright_white().to_string() };
         print!("{}", prompt);
         let _ = io::stdout().flush();
 
