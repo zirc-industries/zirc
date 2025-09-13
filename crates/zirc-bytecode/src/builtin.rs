@@ -17,6 +17,7 @@ pub enum Builtin {
     Max,
     Pow,
     Sqrt,
+    // Convertion functions
     Hex,
     Bin,
     // String functions
