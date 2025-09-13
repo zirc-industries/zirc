@@ -15,6 +15,258 @@ struct Frame {
     locals: Vec<Value>,
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use zirc_bytecode::{Function, Instruction};
+
+    fn make_simple_program(main_code: Vec<Instruction>) -> Program {
+        Program {
+            functions: Vec::new(),
+            main: Function {
+                name: "main".to_string(),
+                arity: 0,
+                local_count: 1,
+                code: main_code,
+            },
+        }
+    }
+
+    #[test]
+    fn test_vm_basic_operations() {
+        let mut vm = Vm::new();
+        
+        // Test basic arithmetic: 5 + 3
+        let program = make_simple_program(vec![
+            Instruction::PushInt(5),
+            Instruction::PushInt(3),
+            Instruction::Add,
+        ]);
+        
+        let result = vm.run(&program).unwrap();
+        assert_eq!(result, None); // No explicit return, so None
+        
+        // Check that the stack has the result
+        assert_eq!(vm.stack.len(), 1);
+        assert_eq!(vm.stack[0], Value::Int(8));
+    }
+
+    #[test]
+    fn test_vm_arithmetic_operations() {
+        let test_cases = vec![
+            (vec![Instruction::PushInt(10), Instruction::PushInt(3), Instruction::Add], Value::Int(13)),
+            (vec![Instruction::PushInt(10), Instruction::PushInt(3), Instruction::Sub], Value::Int(7)),
+            (vec![Instruction::PushInt(10), Instruction::PushInt(3), Instruction::Mul], Value::Int(30)),
+            (vec![Instruction::PushInt(10), Instruction::PushInt(3), Instruction::Div], Value::Int(3)),
+        ];
+        
+        for (code, expected) in test_cases {
+            let mut vm = Vm::new();
+            let program = make_simple_program(code);
+            
+            vm.run(&program).unwrap();
+            assert_eq!(vm.stack[0], expected);
+        }
+    }
+
+    #[test]
+    fn test_vm_comparison_operations() {
+        let test_cases = vec![
+            (vec![Instruction::PushInt(5), Instruction::PushInt(3), Instruction::Lt], Value::Bool(false)),
+            (vec![Instruction::PushInt(3), Instruction::PushInt(5), Instruction::Lt], Value::Bool(true)),
+            (vec![Instruction::PushInt(5), Instruction::PushInt(5), Instruction::Eq], Value::Bool(true)),
+            (vec![Instruction::PushInt(5), Instruction::PushInt(3), Instruction::Eq], Value::Bool(false)),
+            (vec![Instruction::PushInt(5), Instruction::PushInt(3), Instruction::Ne], Value::Bool(true)),
+        ];
+        
+        for (code, expected) in test_cases {
+            let mut vm = Vm::new();
+            let program = make_simple_program(code);
+            
+            vm.run(&program).unwrap();
+            assert_eq!(vm.stack[0], expected);
+        }
+    }
+
+    #[test]
+    fn test_vm_string_operations() {
+        let mut vm = Vm::new();
+        
+        // Test string concatenation
+        let program = make_simple_program(vec![
+            Instruction::PushStr("Hello, ".to_string()),
+            Instruction::PushStr("World!".to_string()),
+            Instruction::Add,
+        ]);
+        
+        vm.run(&program).unwrap();
+        assert_eq!(vm.stack[0], Value::Str("Hello, World!".to_string()));
+    }
+
+    #[test]
+    fn test_vm_boolean_operations() {
+        let mut vm = Vm::new();
+        
+        // Test boolean negation
+        let program = make_simple_program(vec![
+            Instruction::PushBool(true),
+            Instruction::Not,
+        ]);
+        
+        vm.run(&program).unwrap();
+        assert_eq!(vm.stack[0], Value::Bool(false));
+    }
+
+    #[test]
+    fn test_vm_local_variables() {
+        let mut vm = Vm::new();
+        
+        // Test local variable storage and retrieval
+        let program = make_simple_program(vec![
+            Instruction::PushInt(42),
+            Instruction::StoreLocal(0),
+            Instruction::LoadLocal(0),
+        ]);
+        
+        vm.run(&program).unwrap();
+        assert_eq!(vm.stack[0], Value::Int(42));
+    }
+
+    #[test]
+    fn test_vm_global_variables() {
+        let mut vm = Vm::new();
+        
+        // Test global variable storage and retrieval
+        let program = make_simple_program(vec![
+            Instruction::PushStr("test".to_string()),
+            Instruction::StoreGlobal("x".to_string()),
+            Instruction::LoadGlobal("x".to_string()),
+        ]);
+        
+        vm.run(&program).unwrap();
+        assert_eq!(vm.stack[0], Value::Str("test".to_string()));
+        
+        // Check globals snapshot
+        let globals = vm.globals_snapshot();
+        assert_eq!(globals.len(), 1);
+        assert_eq!(globals[0], ("x".to_string(), Value::Str("test".to_string())));
+    }
+
+    #[test]
+    fn test_vm_list_operations() {
+        let mut vm = Vm::new();
+        
+        // Test list creation and indexing
+        let program = make_simple_program(vec![
+            Instruction::PushInt(1),
+            Instruction::PushInt(2),
+            Instruction::PushInt(3),
+            Instruction::MakeList(3),
+            Instruction::PushInt(1),
+            Instruction::Index,
+        ]);
+        
+        vm.run(&program).unwrap();
+        assert_eq!(vm.stack[0], Value::Int(2)); // Index 1 should be 2
+    }
+
+    #[test]
+    fn test_vm_conditional_jumps() {
+        let mut vm = Vm::new();
+        
+        // Test conditional jump (if true, skip next instruction)
+        let program = make_simple_program(vec![
+            Instruction::PushBool(true),
+            Instruction::JumpIfFalse(4), // Should not jump
+            Instruction::PushInt(1),     // Should execute
+            Instruction::Jump(5),        // Skip next instruction
+            Instruction::PushInt(2),     // Should skip
+        ]);
+        
+        vm.run(&program).unwrap();
+        assert_eq!(vm.stack.len(), 1);
+        assert_eq!(vm.stack[0], Value::Int(1));
+    }
+
+    #[test]
+    fn test_vm_division_by_zero() {
+        let mut vm = Vm::new();
+        
+        // Test division by zero error
+        let program = make_simple_program(vec![
+            Instruction::PushInt(10),
+            Instruction::PushInt(0),
+            Instruction::Div,
+        ]);
+        
+        let result = vm.run(&program);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().msg.contains("division by zero"));
+    }
+
+    #[test]
+    fn test_vm_stack_underflow() {
+        let mut vm = Vm::new();
+        
+        // Test stack underflow in Add
+        let program = make_simple_program(vec![
+            Instruction::PushInt(5),
+            Instruction::Add, // Only one operand, should cause underflow
+        ]);
+        
+        let result = vm.run(&program);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().msg.contains("stack underflow"));
+    }
+
+    #[test]
+    fn test_vm_invalid_index() {
+        let mut vm = Vm::new();
+        
+        // Test out of bounds list index
+        let program = make_simple_program(vec![
+            Instruction::PushInt(1),
+            Instruction::PushInt(2),
+            Instruction::MakeList(2),
+            Instruction::PushInt(5), // Index 5 is out of bounds
+            Instruction::Index,
+        ]);
+        
+        let result = vm.run(&program);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().msg.contains("index out of bounds"));
+    }
+
+    #[test] 
+    fn test_vm_builtin_len() {
+        let mut vm = Vm::new();
+        
+        // Test len() builtin with string
+        let program = make_simple_program(vec![
+            Instruction::PushStr("hello".to_string()),
+            Instruction::BuiltinCall(Builtin::Len, 1),
+        ]);
+        
+        vm.run(&program).unwrap();
+        assert_eq!(vm.stack[0], Value::Int(5));
+    }
+
+    #[test]
+    fn test_vm_pop_operation() {
+        let mut vm = Vm::new();
+        
+        // Test Pop instruction
+        let program = make_simple_program(vec![
+            Instruction::PushInt(42),
+            Instruction::Pop,
+        ]);
+        
+        let result = vm.run(&program).unwrap();
+        assert_eq!(result, Some(Value::Int(42))); // Pop sets last_value
+        assert_eq!(vm.stack.len(), 0); // Stack should be empty
+    }
+}
+
 #[derive(Clone, Copy)]
 enum CodeRef {
     Main,
@@ -350,6 +602,139 @@ impl Vm {
                                 },
                                 other => return error(format!("slice() expects string or list, got {:?}", other)),
                             }
+                        }
+                        // Mathematical functions
+                        Builtin::Abs => {
+                            if args.len() != 1 { return error("abs() expects exactly 1 argument"); }
+                            match &args[0] {
+                                Value::Int(n) => self.stack.push(Value::Int(n.abs())),
+                                other => return error(format!("abs() expects int, got {:?}", other)),
+                            }
+                        }
+                        Builtin::Min => {
+                            if args.len() != 2 { return error("min() expects exactly 2 arguments"); }
+                            match (&args[0], &args[1]) {
+                                (Value::Int(x), Value::Int(y)) => self.stack.push(Value::Int(*x.min(y))),
+                                _ => return error("min() expects two ints"),
+                            }
+                        }
+                        Builtin::Max => {
+                            if args.len() != 2 { return error("max() expects exactly 2 arguments"); }
+                            match (&args[0], &args[1]) {
+                                (Value::Int(x), Value::Int(y)) => self.stack.push(Value::Int(*x.max(y))),
+                                _ => return error("max() expects two ints"),
+                            }
+                        }
+                        Builtin::Pow => {
+                            if args.len() != 2 { return error("pow() expects exactly 2 arguments: base and exponent"); }
+                            match (&args[0], &args[1]) {
+                                (Value::Int(b), Value::Int(e)) => {
+                                    if *e < 0 { return error("pow() exponent cannot be negative"); }
+                                    let result = (*b as f64).powi(*e as i32) as i64;
+                                    self.stack.push(Value::Int(result));
+                                },
+                                _ => return error("pow() expects two ints"),
+                            }
+                        }
+                        Builtin::Sqrt => {
+                            if args.len() != 1 { return error("sqrt() expects exactly 1 argument"); }
+                            match &args[0] {
+                                Value::Int(n) => {
+                                    if *n < 0 { return error("sqrt() argument cannot be negative"); }
+                                    let result = (*n as f64).sqrt() as i64;
+                                    self.stack.push(Value::Int(result));
+                                },
+                                other => return error(format!("sqrt() expects int, got {:?}", other)),
+                            }
+                        }
+                        // String functions
+                        Builtin::Upper => {
+                            if args.len() != 1 { return error("upper() expects exactly 1 argument"); }
+                            match &args[0] {
+                                Value::Str(s) => self.stack.push(Value::Str(s.to_uppercase())),
+                                other => return error(format!("upper() expects string, got {:?}", other)),
+                            }
+                        }
+                        Builtin::Lower => {
+                            if args.len() != 1 { return error("lower() expects exactly 1 argument"); }
+                            match &args[0] {
+                                Value::Str(s) => self.stack.push(Value::Str(s.to_lowercase())),
+                                other => return error(format!("lower() expects string, got {:?}", other)),
+                            }
+                        }
+                        Builtin::Trim => {
+                            if args.len() != 1 { return error("trim() expects exactly 1 argument"); }
+                            match &args[0] {
+                                Value::Str(s) => self.stack.push(Value::Str(s.trim().to_string())),
+                                other => return error(format!("trim() expects string, got {:?}", other)),
+                            }
+                        }
+                        Builtin::Split => {
+                            if args.len() != 2 { return error("split() expects exactly 2 arguments: string and delimiter"); }
+                            match (&args[0], &args[1]) {
+                                (Value::Str(s), Value::Str(delim)) => {
+                                    let parts: Vec<Value> = s.split(delim)
+                                        .map(|part| Value::Str(part.to_string()))
+                                        .collect();
+                                    self.stack.push(Value::List(parts));
+                                },
+                                _ => return error("split() expects two strings"),
+                            }
+                        }
+                        Builtin::Join => {
+                            if args.len() != 2 { return error("join() expects exactly 2 arguments: list and separator"); }
+                            match (&args[0], &args[1]) {
+                                (Value::List(items), Value::Str(sep)) => {
+                                    let strings: std::result::Result<Vec<String>, zirc_syntax::error::Error> = items.iter()
+                                        .map(|item| match item {
+                                            Value::Str(s) => Ok(s.clone()),
+                                            other => error(format!("join() list must contain only strings, got {:?}", other)),
+                                        })
+                                        .collect();
+                                    let result = strings?.join(sep);
+                                    self.stack.push(Value::Str(result));
+                                },
+                                _ => return error("join() expects list and string"),
+                            }
+                        }
+                        // Type conversion functions
+                        Builtin::Int => {
+                            if args.len() != 1 { return error("int() expects exactly 1 argument"); }
+                            match &args[0] {
+                                Value::Int(n) => self.stack.push(Value::Int(*n)),
+                                Value::Str(s) => {
+                                    match s.parse::<i64>() {
+                                        Ok(n) => self.stack.push(Value::Int(n)),
+                                        Err(_) => return error(format!("Cannot convert '{}' to int", s)),
+                                    }
+                                },
+                                Value::Bool(true) => self.stack.push(Value::Int(1)),
+                                Value::Bool(false) => self.stack.push(Value::Int(0)),
+                                other => return error(format!("Cannot convert {:?} to int", other)),
+                            }
+                        }
+                        Builtin::Str => {
+                            if args.len() != 1 { return error("str() expects exactly 1 argument"); }
+                            let result = match &args[0] {
+                                Value::Str(s) => s.clone(),
+                                Value::Int(n) => n.to_string(),
+                                Value::Bool(b) => if *b { "true".to_string() } else { "false".to_string() },
+                                Value::List(items) => format!("{}", display_value(&Value::List(items.clone()))),
+                                Value::Unit => "<unit>".to_string(),
+                            };
+                            self.stack.push(Value::Str(result));
+                        }
+                        // Utility functions
+                        Builtin::Type => {
+                            if args.len() != 1 { return error("type() expects exactly 1 argument"); }
+                            let type_name = match &args[0] {
+                                Value::Int(_) => "int",
+                                Value::Str(_) => "string",
+                                Value::Bool(_) => "bool",
+                                Value::List(_) => "list",
+                                Value::Unit => "unit",
+                            };
+                            self.stack.push(Value::Str(type_name.to_string()));
                         }
                     }
                 }
