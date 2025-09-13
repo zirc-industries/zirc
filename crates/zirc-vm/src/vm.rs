@@ -647,6 +647,20 @@ impl Vm {
                                 other => return error(format!("sqrt() expects int, got {:?}", other)),
                             }
                         }
+                        Builtin::Hex => {
+                            if args.len() != 1 { return error("hex() expects exactly 1 argument"); }
+                            match &args[0] {
+                                Value::Int(n) => self.stack.push(Value::Str(format!("{:x}", n))),
+                                other => return error(format!("hex() expects int, got {:?}", other)),
+                            }
+                        }
+                        Builtin::Bin => {
+                            if args.len() != 1 { return error("bin() expects exactly 1 argument"); }
+                            match &args[0] {
+                                Value::Int(n) => self.stack.push(Value::Str(format!("{:b}", n))),
+                                other => return error(format!("bin() expects int, got {:?}", other)),
+                            }
+                        }
                         // String functions
                         Builtin::Upper => {
                             if args.len() != 1 { return error("upper() expects exactly 1 argument"); }
