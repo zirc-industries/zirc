@@ -232,6 +232,23 @@ impl Interpreter {
                     "push" => return self.call_push(env, args),
                     "pop" => return self.call_pop(env, args),
                     "slice" => return self.call_slice(env, args),
+                    // Mathematical functions
+                    "abs" => return self.call_abs(env, args),
+                    "min" => return self.call_min(env, args),
+                    "max" => return self.call_max(env, args),
+                    "pow" => return self.call_pow(env, args),
+                    "sqrt" => return self.call_sqrt(env, args),
+                    // String functions
+                    "upper" => return self.call_upper(env, args),
+                    "lower" => return self.call_lower(env, args),
+                    "trim" => return self.call_trim(env, args),
+                    "split" => return self.call_split(env, args),
+                    "join" => return self.call_join(env, args),
+                    // Type conversion
+                    "int" => return self.call_int(env, args),
+                    "str" => return self.call_str(env, args),
+                    // Utility functions
+                    "type" => return self.call_type(env, args),
                     _ => {}
                 }
                 let func = self
@@ -480,6 +497,212 @@ impl Interpreter {
             },
             other => error(format!("slice() expects string or list, got {:?}", other)),
         }
+    }
+
+    // Mathematical functions
+    
+    /// Absolute value function
+    fn call_abs(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 1 { return error("abs() expects exactly 1 argument"); }
+        let val = self.eval_expr(env, &args[0])?;
+        match val {
+            Value::Int(n) => Ok(Value::Int(n.abs())),
+            other => error(format!("abs() expects int, got {:?}", other)),
+        }
+    }
+    
+    /// Minimum of two values
+    fn call_min(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 2 { return error("min() expects exactly 2 arguments"); }
+        let a = self.eval_expr(env, &args[0])?;
+        let b = self.eval_expr(env, &args[1])?;
+        match (a, b) {
+            (Value::Int(x), Value::Int(y)) => Ok(Value::Int(x.min(y))),
+            _ => error("min() expects two ints"),
+        }
+    }
+    
+    /// Maximum of two values
+    fn call_max(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 2 { return error("max() expects exactly 2 arguments"); }
+        let a = self.eval_expr(env, &args[0])?;
+        let b = self.eval_expr(env, &args[1])?;
+        match (a, b) {
+            (Value::Int(x), Value::Int(y)) => Ok(Value::Int(x.max(y))),
+            _ => error("max() expects two ints"),
+        }
+    }
+    
+    /// Power function (base^exp)
+    fn call_pow(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 2 { return error("pow() expects exactly 2 arguments: base and exponent"); }
+        let base = self.eval_expr(env, &args[0])?;
+        let exp = self.eval_expr(env, &args[1])?;
+        match (base, exp) {
+            (Value::Int(b), Value::Int(e)) => {
+                if e < 0 { return error("pow() exponent cannot be negative"); }
+                let result = (b as f64).powi(e as i32) as i64;
+                Ok(Value::Int(result))
+            },
+            _ => error("pow() expects two ints"),
+        }
+    }
+    
+    /// Square root function
+    fn call_sqrt(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 1 { return error("sqrt() expects exactly 1 argument"); }
+        let val = self.eval_expr(env, &args[0])?;
+        match val {
+            Value::Int(n) => {
+                if n < 0 { return error("sqrt() argument cannot be negative"); }
+                let result = (n as f64).sqrt() as i64;
+                Ok(Value::Int(result))
+            },
+            other => error(format!("sqrt() expects int, got {:?}", other)),
+        }
+    }
+    
+    // String functions
+    
+    /// Convert string to uppercase
+    fn call_upper(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 1 { return error("upper() expects exactly 1 argument"); }
+        let val = self.eval_expr(env, &args[0])?;
+        match val {
+            Value::Str(s) => {
+                let result = s.to_uppercase();
+                self.mem.strings_allocated += 1;
+                self.mem.bytes_allocated += result.len();
+                Ok(Value::Str(result))
+            },
+            other => error(format!("upper() expects string, got {:?}", other)),
+        }
+    }
+    
+    /// Convert string to lowercase
+    fn call_lower(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 1 { return error("lower() expects exactly 1 argument"); }
+        let val = self.eval_expr(env, &args[0])?;
+        match val {
+            Value::Str(s) => {
+                let result = s.to_lowercase();
+                self.mem.strings_allocated += 1;
+                self.mem.bytes_allocated += result.len();
+                Ok(Value::Str(result))
+            },
+            other => error(format!("lower() expects string, got {:?}", other)),
+        }
+    }
+    
+    /// Trim whitespace from string
+    fn call_trim(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 1 { return error("trim() expects exactly 1 argument"); }
+        let val = self.eval_expr(env, &args[0])?;
+        match val {
+            Value::Str(s) => {
+                let result = s.trim().to_string();
+                self.mem.strings_allocated += 1;
+                self.mem.bytes_allocated += result.len();
+                Ok(Value::Str(result))
+            },
+            other => error(format!("trim() expects string, got {:?}", other)),
+        }
+    }
+    
+    /// Split string by delimiter
+    fn call_split(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 2 { return error("split() expects exactly 2 arguments: string and delimiter"); }
+        let text = self.eval_expr(env, &args[0])?;
+        let delimiter = self.eval_expr(env, &args[1])?;
+        match (text, delimiter) {
+            (Value::Str(s), Value::Str(delim)) => {
+                let parts: Vec<Value> = s.split(&delim)
+                    .map(|part| {
+                        self.mem.strings_allocated += 1;
+                        self.mem.bytes_allocated += part.len();
+                        Value::Str(part.to_string())
+                    })
+                    .collect();
+                Ok(Value::List(parts))
+            },
+            _ => error("split() expects two strings"),
+        }
+    }
+    
+    /// Join list of strings with separator
+    fn call_join(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 2 { return error("join() expects exactly 2 arguments: list and separator"); }
+        let list = self.eval_expr(env, &args[0])?;
+        let separator = self.eval_expr(env, &args[1])?;
+        match (list, separator) {
+            (Value::List(items), Value::Str(sep)) => {
+                let strings: Result<Vec<String>> = items.into_iter()
+                    .map(|item| match item {
+                        Value::Str(s) => Ok(s),
+                        other => error(format!("join() list must contain only strings, got {:?}", other)),
+                    })
+                    .collect();
+                let result = strings?.join(&sep);
+                self.mem.strings_allocated += 1;
+                self.mem.bytes_allocated += result.len();
+                Ok(Value::Str(result))
+            },
+            _ => error("join() expects list and string"),
+        }
+    }
+    
+    // Type conversion functions
+    
+    /// Convert value to integer
+    fn call_int(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 1 { return error("int() expects exactly 1 argument"); }
+        let val = self.eval_expr(env, &args[0])?;
+        match val {
+            Value::Int(n) => Ok(Value::Int(n)),
+            Value::Str(s) => {
+                match s.parse::<i64>() {
+                    Ok(n) => Ok(Value::Int(n)),
+                    Err(_) => error(format!("Cannot convert '{}' to int", s)),
+                }
+            },
+            Value::Bool(true) => Ok(Value::Int(1)),
+            Value::Bool(false) => Ok(Value::Int(0)),
+            other => error(format!("Cannot convert {:?} to int", other)),
+        }
+    }
+    
+    /// Convert value to string
+    fn call_str(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 1 { return error("str() expects exactly 1 argument"); }
+        let val = self.eval_expr(env, &args[0])?;
+        let result = match val {
+            Value::Str(s) => s,
+            Value::Int(n) => n.to_string(),
+            Value::Bool(b) => if b { "true".to_string() } else { "false".to_string() },
+            Value::List(items) => format!("{}", Value::List(items)),
+            Value::Unit => "<unit>".to_string(),
+        };
+        self.mem.strings_allocated += 1;
+        self.mem.bytes_allocated += result.len();
+        Ok(Value::Str(result))
+    }
+    
+    // Utility functions
+    
+    /// Get type of value as string
+    fn call_type(&mut self, env: &mut Env<'_>, args: &[Expr]) -> Result<Value> {
+        if args.len() != 1 { return error("type() expects exactly 1 argument"); }
+        let val = self.eval_expr(env, &args[0])?;
+        let type_name = match val {
+            Value::Int(_) => "int",
+            Value::Str(_) => "string",
+            Value::Bool(_) => "bool",
+            Value::List(_) => "list",
+            Value::Unit => "unit",
+        };
+        self.mem.strings_allocated += 1;
+        self.mem.bytes_allocated += type_name.len();
+        Ok(Value::Str(type_name.to_string()))
     }
 }
 
