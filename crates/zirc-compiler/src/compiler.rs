@@ -75,6 +75,23 @@ pub(crate) fn builtin_of(name: &str) -> Option<zirc_bytecode::Builtin> {
         "push" => Some(zirc_bytecode::Builtin::Push),
         "pop" => Some(zirc_bytecode::Builtin::Pop),
         "slice" => Some(zirc_bytecode::Builtin::Slice),
+        // Mathematical functions
+        "abs" => Some(zirc_bytecode::Builtin::Abs),
+        "min" => Some(zirc_bytecode::Builtin::Min),
+        "max" => Some(zirc_bytecode::Builtin::Max),
+        "pow" => Some(zirc_bytecode::Builtin::Pow),
+        "sqrt" => Some(zirc_bytecode::Builtin::Sqrt),
+        // String functions
+        "upper" => Some(zirc_bytecode::Builtin::Upper),
+        "lower" => Some(zirc_bytecode::Builtin::Lower),
+        "trim" => Some(zirc_bytecode::Builtin::Trim),
+        "split" => Some(zirc_bytecode::Builtin::Split),
+        "join" => Some(zirc_bytecode::Builtin::Join),
+        // Type conversion
+        "int" => Some(zirc_bytecode::Builtin::Int),
+        "str" => Some(zirc_bytecode::Builtin::Str),
+        // Utility functions
+        "type" => Some(zirc_bytecode::Builtin::Type),
         _ => None,
     }
 }
