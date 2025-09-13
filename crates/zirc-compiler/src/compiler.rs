@@ -81,6 +81,9 @@ pub(crate) fn builtin_of(name: &str) -> Option<zirc_bytecode::Builtin> {
         "max" => Some(zirc_bytecode::Builtin::Max),
         "pow" => Some(zirc_bytecode::Builtin::Pow),
         "sqrt" => Some(zirc_bytecode::Builtin::Sqrt),
+        // TODO: check if hex/bin need special handling here or move separately
+        "bin" => Some(zirc_bytecode::Builtin::Bin),
+        "hex" => Some(zirc_bytecode::Builtin::Hex),
         // String functions
         "upper" => Some(zirc_bytecode::Builtin::Upper),
         "lower" => Some(zirc_bytecode::Builtin::Lower),
