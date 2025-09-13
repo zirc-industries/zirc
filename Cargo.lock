@@ -860,7 +860,7 @@ checksum = "052283831dbae3d879dc7f51f3d92703a316ca49f91540417d38591826127814"
 
 [[package]]
 name = "zirc-bench"
-version = "0.0.1-dev"
+version = "0.0.2-dev"
 dependencies = [
  "chrono",
  "clap",
@@ -874,14 +874,14 @@ dependencies = [
 
 [[package]]
 name = "zirc-bytecode"
-version = "0.0.1-dev"
+version = "0.0.2-dev"
 dependencies = [
  "zirc-syntax",
 ]
 
 [[package]]
 name = "zirc-cli"
-version = "0.0.1-dev"
+version = "0.0.2-dev"
 dependencies = [
  "assert_cmd",
  "owo-colors",
@@ -900,7 +900,7 @@ dependencies = [
 
 [[package]]
 name = "zirc-compiler"
-version = "0.0.1-dev"
+version = "0.0.2-dev"
 dependencies = [
  "zirc-bytecode",
  "zirc-syntax",
@@ -908,7 +908,7 @@ dependencies = [
 
 [[package]]
 name = "zirc-fmt"
-version = "0.0.1-dev"
+version = "0.0.2-dev"
 dependencies = [
  "zirc-lexer",
  "zirc-parser",
@@ -917,7 +917,7 @@ dependencies = [
 
 [[package]]
 name = "zirc-interpreter"
-version = "0.0.1-dev"
+version = "0.0.2-dev"
 dependencies = [
  "zirc-lexer",
  "zirc-parser",
@@ -926,14 +926,14 @@ dependencies = [
 
 [[package]]
 name = "zirc-lexer"
-version = "0.0.1-dev"
+version = "0.0.2-dev"
 dependencies = [
  "zirc-syntax",
 ]
 
 [[package]]
 name = "zirc-parser"
-version = "0.0.1-dev"
+version = "0.0.2-dev"
 dependencies = [
  "zirc-lexer",
  "zirc-syntax",
@@ -941,11 +941,11 @@ dependencies = [
 
 [[package]]
 name = "zirc-syntax"
-version = "0.0.1-dev"
+version = "0.0.2-dev"
 
 [[package]]
 name = "zirc-vm"
-version = "0.0.1-dev"
+version = "0.0.2-dev"
 dependencies = [
  "zirc-bytecode",
  "zirc-syntax",
