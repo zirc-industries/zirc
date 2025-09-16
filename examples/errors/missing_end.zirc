@@ -1,0 +1,3 @@
+fun test(): 
+    show("missing end")
+show("after function")
