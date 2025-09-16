@@ -222,8 +222,8 @@ fn render_error(kind: &str, source: &str, err: &Error) {
         }
     }
     
-    // Use the same enhanced error suggestions from main.rs
-    crate::provide_error_suggestions(&err.msg);
+    // Use the same enhanced error suggestions from shared module
+    crate::common::provide_error_suggestions(&err.msg);
 }
 
 fn is_complete(input: &str) -> bool {
