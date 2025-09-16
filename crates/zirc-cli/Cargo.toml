@@ -10,6 +10,11 @@ rust-version.workspace = true
 description = "Command-line interface and REPL for the Zirc programming language"
 keywords.workspace = true
 categories.workspace = true
+autobins = false
+
+[[bin]]
+name = "zirc"
+path = "src/main.rs"
 
 [[bin]]
 name = "zirc-repl"

@@ -221,6 +221,9 @@ fn render_error(kind: &str, source: &str, err: &Error) {
             eprintln!("  at {}:{}", line, col);
         }
     }
+    
+    // Use the same enhanced error suggestions from main.rs
+    crate::provide_error_suggestions(&err.msg);
 }
 
 fn is_complete(input: &str) -> bool {
