@@ -1,6 +1,5 @@
 use std::io::{self, Write};
 
-use winapi::shared::minwindef::DWORD;
 use windows::Win32::System::Console::{GetConsoleCP, SetConsoleOutputCP};
 
 use owo_colors::OwoColorize;
@@ -37,7 +36,7 @@ fn repl_interpreter() {
     let mut interpreter = Interpreter::new();
     let mut env = Env::new_root();
 
-    let utf8_cp: DWORD = 65001;
+    let utf8_cp: u32 = 65001;
     let result = unsafe { SetConsoleOutputCP(utf8_cp) };
     if !result.as_bool() {
         let err_code = unsafe { GetConsoleCP() };
